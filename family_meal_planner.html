@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小川家の献立プランナー</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:#f7f6f2;color:#2c2c2a;min-height:100vh;}
+  .app{max-width:860px;margin:0 auto;padding:0 12px 40px;}
+  .top-header{padding:16px 0 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0ddd6;margin-bottom:14px;}
+  .top-header h1{font-size:18px;font-weight:700;}
+  .top-header p{font-size:12px;color:#888780;margin-top:2px;}
+  .offline-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:#f1efe8;color:#5f5e5a;font-weight:600;border:1px solid #d3d1c7;}
+  .child-switcher{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .child-btn{padding:12px 10px;border:2px solid #e0ddd6;border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:left;}
+  .child-btn-name{font-size:16px;font-weight:700;display:block;margin-bottom:1px;}
+  .child-btn-sub{font-size:11px;color:#888780;display:block;}
+  .child-btn-age{font-size:10px;display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-weight:600;}
+  .child-btn-inner{display:flex;align-items:center;justify-content:space-between;}
+  .child-btn-info{flex:1;}
+  .child-photo{width:54px;height:54px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-left:10px;border:2px solid #e0ddd6;}
+  .child-btn.aoya.active .child-photo{border-color:#185FA5;}
+  .child-btn.eita.active .child-photo{border-color:#1D9E75;}
+  .child-btn.aoya.active{border-color:#185FA5;background:#EDF4FC;}
+  .child-btn.aoya .child-btn-name{color:#3B6D11;}
+  .child-btn.aoya .child-btn-age{background:#EAF3DE;color:#3B6D11;}
+  .child-btn.eita.active{border-color:#1D9E75;background:#f0fbf6;}
+  .child-btn.eita .child-btn-name{color:#1D9E75;}
+  .child-btn.eita .child-btn-age{background:#E1F5EE;color:#1D9E75;}
+  .shared-tab-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+  .shared-tab{flex:1;min-width:80px;padding:8px 4px;font-size:11px;border:none;background:#e8e6e0;cursor:pointer;border-radius:8px;color:#888780;transition:all 0.15s;font-family:inherit;text-align:center;}
+  .shared-tab.active{background:#fff;color:#2c2c2a;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .shared-section{display:none;width:100%;max-width:100%;}
+  .shared-section.active{display:block;width:100%;}
+  .child-page{display:none;}
+  .child-page.active{display:block;}
+  .page-header{padding:12px 0;border-bottom:1px solid #e0ddd6;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+  .page-header h2{font-size:16px;font-weight:600;}
+  .page-header p{font-size:11px;color:#888780;margin-top:2px;}
+  .badge-green{font-size:11px;padding:3px 10px;border-radius:20px;background:#EAF3DE;color:#3B6D11;font-weight:600;}
+  .badge-blue{font-size:11px;padding:3px 10px;border-radius:20px;background:#E1F5EE;color:#1D9E75;font-weight:600;}
+  .inner-tabs{display:flex;gap:4px;margin-bottom:14px;background:#e8e6e0;border-radius:10px;padding:4px;}
+  .inner-tab{flex:1;padding:8px 4px;font-size:12px;border:none;background:none;cursor:pointer;border-radius:8px;color:#888780;transition:all 0.15s;font-family:inherit;}
+  .inner-tab.active{background:#fff;color:#2c2c2a;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .inner-section{display:none;}
+  .inner-section.active{display:block;}
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .month-nav h3{font-size:15px;font-weight:600;}
+  .nav-btn{background:#fff;border:1px solid #d3d1c7;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;color:#5f5e5a;font-family:inherit;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-dow{font-size:10px;color:#b4b2a9;text-align:center;padding:4px 0;font-weight:600;}
+  .cal-day{min-height:70px;border:1px solid #e8e6e0;border-radius:8px;padding:4px;cursor:pointer;transition:all 0.12s;background:#fff;}
+  .cal-day:hover{border-color:#b4b2a9;}
+  .cal-day.empty{background:none;border-color:transparent;cursor:default;}
+  .cal-day.today-g{border-color:#185FA5;border-width:2px;}
+  .cal-day.today-b{border-color:#1D9E75;border-width:2px;}
+  .cal-day.sel-g{border-color:#185FA5;border-width:2px;background:#EDF4FC;}
+  .cal-day.sel-b{border-color:#1D9E75;border-width:2px;background:#f0fbf6;}
+  .day-num{font-size:11px;color:#888780;margin-bottom:2px;font-weight:500;}
+  .cal-day.today-g .day-num,.cal-day.sel-g .day-num{color:#185FA5;font-weight:700;}
+  .cal-day.today-b .day-num,.cal-day.sel-b .day-num{color:#1D9E75;font-weight:700;}
+  .day-meal{font-size:9px;padding:1px 3px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+  .dm-b1{background:#EAF3DE;color:#042C53;}.dm-b2{background:#FAEEDA;color:#633806;}
+  .dm-g1{background:#E1F5EE;color:#0F6E56;}.dm-g2{background:#FAEEDA;color:#633806;}.dm-g3{background:#EEEDFE;color:#3C3489;}
+  .day-wtag{font-size:8px;color:#d3d1c7;text-align:right;margin-top:2px;}
+  .detail-panel{margin-top:12px;padding:14px;border:1px solid #e0ddd6;border-radius:12px;background:#fff;}
+  .detail-panel h4{font-size:14px;font-weight:600;margin-bottom:10px;}
+  .meal-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;}
+  .meal-label{font-size:11px;color:#888780;width:32px;flex-shrink:0;padding-top:5px;}
+  .meal-chip{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #e0ddd6;cursor:pointer;transition:all 0.12s;display:inline-block;}
+  .mc-g1{background:#EAF3DE;color:#042C53;border-color:#85B7EB;}.mc-g2{background:#FAEEDA;color:#633806;border-color:#FAC775;}
+  .mc-b1{background:#E1F5EE;color:#0F6E56;border-color:#9FE1CB;}.mc-b2{background:#FAEEDA;color:#633806;border-color:#FAC775;}.mc-b3{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;}
+  .chip-hint{font-size:10px;color:#b4b2a9;margin-left:3px;}
+  .inline-recipe{margin-top:6px;padding:12px;border:1px solid #d3d1c7;border-radius:10px;background:#fafaf8;display:none;}
+  .inline-recipe.open{display:block;}
+  .week-selector{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+  .wbtn-g{padding:6px 12px;border:1px solid #d3d1c7;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;color:#5f5e5a;font-family:inherit;transition:all 0.12s;}
+  .wbtn-g.active{background:#185FA5;color:#fff;border-color:#185FA5;font-weight:600;}
+  .wbtn-b{padding:6px 12px;border:1px solid #d3d1c7;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;color:#5f5e5a;font-family:inherit;transition:all 0.12s;}
+  .wbtn-b.active{background:#1D9E75;color:#fff;border-color:#1D9E75;font-weight:600;}
+  .sec-title{font-size:12px;font-weight:600;color:#888780;margin-bottom:8px;}
+  .ing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:12px;}
+  .ing-card{padding:9px 10px;border:1px solid #e0ddd6;border-radius:10px;background:#fff;}
+  .ing-name{font-size:12px;font-weight:600;margin-bottom:2px;}
+  .ing-amt{font-size:10px;color:#888780;}
+  .ing-note-g{font-size:10px;color:#185FA5;margin-top:2px;font-weight:500;}
+  .ing-note-b{font-size:10px;color:#1D9E75;margin-top:2px;font-weight:500;}
+  .ing-tag{font-size:10px;padding:2px 6px;border-radius:8px;display:inline-block;margin-top:3px;font-weight:500;}
+  .tg{background:#FAEEDA;color:#633806;}.tv{background:#E6F1FB;color:#0C447C;}.tp{background:#EEEDFE;color:#3C3489;}.td{background:#E1F5EE;color:#0F6E56;}.tf{background:#FAECE7;color:#4A1B0C;}.to{background:#f1efe8;color:#5f5e5a;}
+  .total-bar{padding:10px 14px;background:#f1efe8;border-radius:10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+  .note-green{margin-top:10px;padding:9px 12px;border:1px solid #85B7EB;border-radius:8px;background:#EAF3DE;font-size:11px;color:#042C53;line-height:1.7;}
+  .note-red{margin-top:8px;padding:9px 12px;border:1px solid #F7C1C1;border-radius:8px;background:#FCEBEB;font-size:11px;color:#791F1F;line-height:1.6;}
+  .note-blue{margin-top:8px;padding:9px 12px;border:1px solid #B5D4F4;border-radius:8px;background:#E1F5EE;font-size:11px;color:#085041;line-height:1.6;}
+  .rc-open-g{border-color:#185FA5;border-width:2px;}
+  .rc-open-b{border-color:#1D9E75;border-width:2px;}
+  .tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:12px;}
+  .tip-card{padding:12px;border:1px solid #e0ddd6;border-radius:12px;background:#fff;}
+  .tip-lbl{font-size:11px;font-weight:700;color:#888780;margin-bottom:5px;}
+  .tip-title{font-size:12px;font-weight:600;margin-bottom:4px;}
+  .tip-body{font-size:11px;color:#5f5e5a;line-height:1.6;}
+  .schedule-box{padding:12px;border:1px solid #e0ddd6;border-radius:12px;background:#fff;}
+  .sch-row{display:flex;gap:10px;border-bottom:1px solid #f1efe8;padding:4px 0;font-size:12px;}
+  .sch-row:last-child{border-bottom:none;}
+  .sch-time{font-weight:600;min-width:60px;}
+  .child-tag{font-size:10px;padding:1px 6px;border-radius:6px;display:inline-block;font-weight:600;margin-bottom:4px;}
+  .ct-both{background:#EEEDFE;color:#3C3489;}
+  .ct-aoya{background:#EAF3DE;color:#042C53;}
+  .ct-eita{background:#E1F5EE;color:#0F6E56;}
+  .howto-txt{font-size:10px;color:#0C447C;margin-top:3px;line-height:1.4;}
+  .recipe-img-wrap img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
+  .shared-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:#EAF3DE;color:#3B6D11;font-weight:600;}
+  /* Gemini AI arrange */
+  .ai-loading{display:flex;align-items:center;gap:6px;font-size:12px;color:#888780;}
+  .dot-pulse{display:flex;gap:3px;}
+  .dot-pulse span{width:5px;height:5px;border-radius:50%;background:#888780;animation:dp 1s infinite;}
+  .dot-pulse span:nth-child(2){animation-delay:0.2s;}
+  .dot-pulse span:nth-child(3){animation-delay:0.4s;}
+  @keyframes dp{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+
+  /* 完食度スタイル */
+  .kanshoku-section{margin-top:12px;padding:12px;background:#f7f6f2;border-radius:10px;border:1px solid #e0ddd6;}
+  .kanshoku-title{font-size:11px;font-weight:600;color:#888780;margin-bottom:8px;}
+  .kanshoku-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .kanshoku-meal-label{font-size:11px;color:#5f5e5a;width:32px;flex-shrink:0;}
+  .kanshoku-btns{display:flex;gap:4px;}
+  .kbtn{padding:5px 10px;border:1px solid #d3d1c7;border-radius:16px;background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:#5f5e5a;font-family:inherit;transition:all 0.12s;}
+  .kbtn:hover{border-color:#b4b2a9;}
+  .kbtn.active-g{background:#185FA5;border-color:#185FA5;color:#fff;}
+  .kbtn.active-b{background:#1D9E75;border-color:#1D9E75;color:#fff;}
+  .kanshoku-saved{font-size:10px;color:#185FA5;margin-top:6px;display:none;}
+  .kanshoku-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:3px;vertical-align:middle;}
+  .kd-full{background:#185FA5;}.kd-most{background:#85B7EB;}.kd-half{background:#FAC775;}.kd-little{background:#F09595;}
+  /* 週次AI評価 */
+  .weekly-eval-box{margin-top:16px;padding:14px;border:1px solid #d3d1c7;border-radius:12px;background:#fff;overflow:visible;}
+  .weekly-eval-title{font-size:13px;font-weight:600;margin-bottom:10px;}
+  .week-eval-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .weval-btn-g{padding:6px 14px;border:1px solid #d3d1c7;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;}
+  .weval-btn-g.active{background:#185FA5;color:#fff;border-color:#185FA5;font-weight:600;}
+  .weval-btn-b{padding:6px 14px;border:1px solid #d3d1c7;border-radius:20px;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;}
+  .weval-btn-b.active{background:#1D9E75;color:#fff;border-color:#1D9E75;font-weight:600;}
+  .weval-summary{padding:10px;background:#f7f6f2;border-radius:8px;font-size:12px;color:#5f5e5a;margin-bottom:10px;line-height:1.7;}
+  .weval-run-btn-g{width:100%;padding:10px;border:none;border-radius:8px;background:#185FA5;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;}
+  .weval-run-btn-g:disabled{background:#b4b2a9;cursor:not-allowed;}
+  .weval-run-btn-b{width:100%;padding:10px;border:none;border-radius:8px;background:#1D9E75;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;}
+  .weval-run-btn-b:disabled{background:#b4b2a9;cursor:not-allowed;}
+  .weval-result{padding:12px;background:#f7f6f2;border-radius:8px;font-size:12px;color:#2c2c2a;line-height:1.8;display:none;white-space:pre-wrap;border:1px solid #e0ddd6;word-break:break-word;overflow-wrap:break-word;height:auto;max-height:none;overflow:visible;}
+  .weval-result.show{display:block;height:auto;max-height:none;overflow:visible;}
+
+  /* 完食度カレンダー色分け */
+  /* 碧也(aoya)=青テーマ → suffix b、瑛太(eita)=緑テーマ → suffix g */
+  .cal-day.k-full-b{background:#E6F1FB;border-color:#185FA5;border-width:2px;}
+  .cal-day.k-most-b{background:#EDF4FC;border-color:#85B7EB;border-width:2px;}
+  .cal-day.k-half-b{background:#FAEEDA;border-color:#FAC775;border-width:2px;}
+  .cal-day.k-low-b{background:#FCEBEB;border-color:#F09595;border-width:2px;}
+  .cal-day.k-full-g{background:#E1F5EE;border-color:#1D9E75;border-width:2px;}
+  .cal-day.k-most-g{background:#f0fbf6;border-color:#9FE1CB;border-width:2px;}
+  .cal-day.k-half-g{background:#FAEEDA;border-color:#FAC775;border-width:2px;}
+  .cal-day.k-low-g{background:#FCEBEB;border-color:#F09595;border-width:2px;}
+  .k-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:10px;color:#888780;align-items:center;}
+  .k-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:3px;flex-shrink:0;}
+  /* カスタム献立モーダル */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;}
+  .modal-title{font-size:15px;font-weight:600;margin-bottom:14px;}
+  .modal-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#888780;margin-top:-4px;}
+  .modal-row{margin-bottom:12px;}
+  .modal-label{font-size:12px;font-weight:600;color:#888780;margin-bottom:4px;display:block;}
+  .modal-input{width:100%;padding:8px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:13px;font-family:inherit;}
+  .modal-select{width:100%;padding:8px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;}
+  .modal-save-btn-g{width:100%;padding:10px;border:none;border-radius:8px;background:#185FA5;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;}
+  .modal-save-btn-b{width:100%;padding:10px;border:none;border-radius:8px;background:#1D9E75;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;}
+  .add-menu-btn{display:inline-block;padding:5px 12px;border:1px dashed #d3d1c7;border-radius:16px;background:none;cursor:pointer;font-size:11px;color:#888780;font-family:inherit;margin-top:8px;}
+  .add-menu-btn:hover{border-color:#b4b2a9;color:#5f5e5a;}
+
+
+  /* 次週献立組み替え */
+  .improve-proposal-box{margin-top:12px;padding:12px;background:#f0fbf6;border:1px solid #9FE1CB;border-radius:10px;display:none;}
+  .improve-proposal-box.show{display:block;}
+  .improve-proposal-title{font-size:12px;font-weight:600;color:#0F6E56;margin-bottom:8px;}
+  .improve-week-select-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  .improve-week-label{font-size:11px;color:#5f5e5a;}
+  .improve-apply-btn{width:100%;padding:9px;border:none;border-radius:8px;background:#1D9E75;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+  .improve-apply-btn.blue{background:#185FA5;}
+  .improve-apply-btn:disabled{background:#b4b2a9;cursor:not-allowed;}
+  .improve-preview-box{margin-top:10px;padding:10px;background:#fff;border:1px solid #d3d1c7;border-radius:8px;font-size:11px;color:#2c2c2a;display:none;line-height:1.8;}
+  .improve-preview-box.show{display:block;}
+  .improve-confirm-btns{display:flex;gap:8px;margin-top:10px;}
+  .confirm-yes-btn{flex:1;padding:9px;border:none;border-radius:8px;background:#1D9E75;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .confirm-yes-btn.blue{background:#185FA5;}
+  .confirm-no-btn{flex:1;padding:9px;border:1px solid #d3d1c7;border-radius:8px;background:#fff;color:#5f5e5a;font-size:12px;cursor:pointer;font-family:inherit;}
+  /* AI アシスタント */
+  .ai-tab-section{padding:12px 0;}
+  .ai-feature-card{border:1px solid #e0ddd6;border-radius:12px;background:#fff;padding:14px;margin-bottom:12px;}
+  .ai-feature-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .ai-feature-desc{font-size:11px;color:#888780;margin-bottom:12px;line-height:1.5;}
+  .ai-sub-label{font-size:11px;font-weight:600;color:#888780;margin-bottom:5px;display:block;}
+  .ai-textarea{width:100%;padding:8px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:12px;font-family:inherit;resize:vertical;min-height:80px;line-height:1.6;}
+  .ai-run-btn{width:100%;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;margin-bottom:8px;}
+  .ai-run-btn.blue{background:#185FA5;color:#fff;}
+  .ai-run-btn.green{background:#1D9E75;color:#fff;}
+  .ai-run-btn.purple{background:#534AB7;color:#fff;}
+  .ai-run-btn.amber{background:#BA7517;color:#fff;}
+  .ai-run-btn:disabled{background:#b4b2a9;cursor:not-allowed;}
+  .ai-output{padding:12px;background:#f7f6f2;border-radius:8px;font-size:12px;color:#2c2c2a;line-height:1.8;display:none;border:1px solid #e0ddd6;word-break:break-word;overflow-wrap:break-word;overflow:visible;}
+  .ai-output.show{display:block;height:auto;max-height:none;overflow:visible;}
+  .ai-chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+  .ai-sel-chip{padding:4px 10px;border:1px solid #d3d1c7;border-radius:16px;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;}
+  .ai-sel-chip.on{background:#534AB7;border-color:#534AB7;color:#fff;font-weight:600;}
+  .ai-input-row{display:flex;gap:6px;margin-bottom:8px;}
+  .ai-short-input{flex:1;padding:7px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:12px;font-family:inherit;}
+  .ai-add-chip-btn{padding:7px 12px;border:1px solid #d3d1c7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .ai-section-divider{border:none;border-top:1px solid #e0ddd6;margin:12px 0;}
+  .transcribe-box{padding:10px 12px;background:#EEEDFE;border-radius:8px;margin-bottom:10px;border:1px solid #AFA9EC;}
+  .transcribe-title{font-size:11px;font-weight:600;color:#534AB7;margin-bottom:8px;display:block;}
+  .transcribe-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+  .transcribe-select{padding:6px 10px;border:1px solid #AFA9EC;border-radius:8px;font-size:12px;font-family:inherit;background:#fff;color:#2c2c2a;}
+  .transcribe-btn{padding:7px 14px;border:none;border-radius:8px;background:#534AB7;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .transcribe-btn:hover{background:#3C3489;}
+  .transcribe-note{font-size:10px;color:#7F77DD;margin-top:4px;}
+  .delete-meal-btn{font-size:10px;padding:2px 8px;border:1px solid #F7C1C1;border-radius:10px;background:#FCEBEB;color:#791F1F;cursor:pointer;font-family:inherit;margin-left:6px;vertical-align:middle;}
+  .delete-meal-btn:hover{background:#F7C1C1;}
+
+  /* 栄養バランスチャート */
+  .nutrition-section{padding:0;}
+  .nutrition-card{border:1px solid #e0ddd6;border-radius:12px;background:#fff;padding:14px;margin-bottom:14px;}
+  .nutrition-card-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .nutrition-card-sub{font-size:11px;color:#888780;margin-bottom:12px;}
+  .nutrition-month-sel{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;max-width:100%;}
+  .nutrition-month-label{font-size:12px;color:#5f5e5a;}
+  .chart-wrap{position:relative;width:100%;max-width:400px;margin:0 auto 16px;overflow:hidden;}
+  .nutrient-bars{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .nutrient-row{display:flex;align-items:center;gap:8px;}
+  .nutrient-name{font-size:11px;color:#5f5e5a;width:90px;flex-shrink:0;text-align:right;}
+  .nutrient-bar-wrap{flex:1;background:#f1efe8;border-radius:4px;height:14px;overflow:hidden;position:relative;}
+  .nutrient-bar-fill{height:100%;border-radius:4px;transition:width 0.4s;}
+  .nutrient-val{font-size:10px;color:#888780;width:70px;flex-shrink:0;}
+  .nutrient-tag{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:600;flex-shrink:0;}
+  .ntag-ok{background:#E1F5EE;color:#085041;}
+  .ntag-low{background:#FCEBEB;color:#791F1F;}
+  .ntag-high{background:#FAEEDA;color:#633806;}
+  .nutrition-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;}
+  .nleg-item{display:flex;align-items:center;gap:4px;}
+  .nleg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .nutrition-note{font-size:10px;color:#b4b2a9;margin-top:10px;line-height:1.5;}
+  .radar-container{position:relative;height:280px;max-width:320px;margin:0 auto;width:100%;overflow:hidden;}
+
+  /* 料理別完食度 */
+  .dish-kanshoku-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;padding-left:8px;}
+  .dish-name-label{font-size:11px;color:#2c2c2a;min-width:100px;max-width:140px;line-height:1.3;}
+  .dish-kbtns{display:flex;gap:3px;flex-wrap:nowrap;}
+  .dish-kbtn{padding:3px 8px;border:1px solid #d3d1c7;border-radius:12px;background:#fff;cursor:pointer;font-size:10px;font-weight:600;color:#5f5e5a;font-family:inherit;white-space:nowrap;}
+  .dish-kbtn.active-b{background:#185FA5;border-color:#185FA5;color:#fff;}
+  .dish-kbtn.active-g{background:#1D9E75;border-color:#1D9E75;color:#fff;}
+  .meal-slot-title{font-size:11px;font-weight:600;color:#888780;margin:8px 0 4px 0;}
+
+  /* 成長曲線 */
+  .growth-card{border:1px solid #e0ddd6;border-radius:12px;background:#fff;padding:14px;margin-bottom:14px;}
+  .growth-card-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .growth-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;max-width:100%;}
+  .growth-input-row{display:flex;flex-direction:column;gap:4px;}
+  .growth-input-label{font-size:11px;font-weight:600;color:#888780;}
+  .growth-input{padding:7px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:13px;font-family:inherit;width:100%;}
+  .growth-add-btn{padding:8px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;}
+  .growth-chart-wrap{position:relative;height:280px;margin-bottom:8px;width:100%;overflow:hidden;}
+  .growth-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:#888780;margin-bottom:8px;}
+  .growth-legend-item{display:flex;align-items:center;gap:4px;}
+  .growth-legend-line{width:20px;height:3px;border-radius:2px;flex-shrink:0;}
+  .growth-records{margin-top:10px;}
+  .growth-record-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:6px;background:#f7f6f2;margin-bottom:4px;font-size:12px;}
+  .growth-del-btn{background:none;border:none;color:#F09595;cursor:pointer;font-size:13px;padding:0 4px;}
+  .growth-edit-btn{background:none;border:1px solid #d3d1c7;border-radius:6px;color:#5f5e5a;cursor:pointer;font-size:11px;padding:2px 7px;font-family:inherit;margin-right:4px;}
+  .growth-edit-btn:hover{background:#f1efe8;}
+  .growth-editing-row{background:#EEEDFE;border:1px solid #AFA9EC;border-radius:8px;padding:8px;margin-bottom:6px;}
+  .growth-percentile-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
+
+  /* 料理写真栄養解析 */
+  .photo-upload-area{border:2px dashed #d3d1c7;border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:#fafaf8;transition:all 0.2s;margin-bottom:10px;}
+  .photo-upload-area:hover{border-color:#AFA9EC;background:#f7f5ff;}
+  .photo-upload-area.has-image{border-style:solid;border-color:#AFA9EC;padding:8px;}
+  .photo-preview{width:100%;max-height:240px;object-fit:contain;border-radius:8px;display:none;}
+  .photo-preview.show{display:block;}
+  .nutr-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+  .nutr-result-item{background:#f7f6f2;border-radius:8px;padding:8px;text-align:center;}
+  .nutr-result-value{font-size:16px;font-weight:700;color:#2c2c2a;}
+  .nutr-result-label{font-size:10px;color:#888780;margin-top:2px;}
+  .nutr-result-bar{height:4px;border-radius:2px;background:#e0ddd6;margin-top:4px;}
+  .nutr-result-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
+  .food-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#EEEDFE;color:#534AB7;margin:2px;}
+  @media(max-width:500px){
+    .cal-day{min-height:52px;padding:3px;}.day-meal{display:none;}
+      .ing-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));}
+    .tips-grid{grid-template-columns:1fr;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAjeaL--GzxWdr00K0yZsB-ij6Inlj0UVs",
+    authDomain: "ogawa-family.firebaseapp.com",
+    projectId: "ogawa-family",
+    storageBucket: "ogawa-family.firebasestorage.app",
+    messagingSenderId: "808596639950",
+    appId: "1:808596639950:web:1860ddfa2a498d8840009f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // グローバルに公開
+  window._db = db;
+  window._fsDoc = doc;
+  window._fsSetDoc = setDoc;
+  window._fsGetDoc = getDoc;
+  window._fsOnSnapshot = onSnapshot;
+  window._fsCollection = collection;
+  window._firebaseReady = true;
+
+  // FirestoreからデータをlocalStorageに同期するリスナー
+  function startRealtimeSync(){
+    // カスタム献立の同期
+    const menuCol = collection(db, 'menus');
+    onSnapshot(menuCol, (snapshot) => {
+      snapshot.docChanges().forEach(change => {
+        const key = change.doc.id;
+        if(change.type === 'removed'){
+          localStorage.removeItem(key);
+        } else {
+          const data = change.doc.data();
+          if(data && data.value !== undefined){
+            try{ localStorage.setItem(key, data.value); }catch(e){}
+          }
+        }
+      });
+      // カレンダーを再描画
+      if(window.aRenderCal) window.aRenderCal();
+      if(window.eRenderCal) window.eRenderCal();
+    });
+
+    // 成長記録の同期
+    const growthCol = collection(db, 'growth');
+    onSnapshot(growthCol, (snapshot) => {
+      snapshot.docChanges().forEach(change => {
+        const key = 'growth_' + change.doc.id.replace('child_','');
+        if(change.type === 'removed'){
+          localStorage.removeItem(key);
+        } else {
+          const data = change.doc.data();
+          if(data && data.value !== undefined){
+            try{ localStorage.setItem(key, data.value); }catch(e){}
+          }
+        }
+      });
+    });
+    // 完食度の同期
+    const kanshokuCol = collection(db, 'kanshoku');
+    onSnapshot(kanshokuCol, (snapshot) => {
+      snapshot.docChanges().forEach(change => {
+        const key = 'k_' + change.doc.id;
+        if(change.type === 'removed'){
+          localStorage.removeItem(key);
+        } else {
+          const data = change.doc.data();
+          if(data && data.value !== undefined){
+            try{ localStorage.setItem(key, data.value); }catch(e){}
+          }
+        }
+      });
+      if(window.aRenderCal) window.aRenderCal();
+      if(window.eRenderCal) window.eRenderCal();
+    });
+
+    console.log('Firebase リアルタイム同期開始');
+    // 同期状態表示
+    const badge = document.getElementById('sync-badge');
+    if(badge){ badge.textContent='クラウド同期中'; badge.style.color='#085041'; }
+  }
+
+  // DOMロード後に同期開始
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(startRealtimeSync, 1000);
+  });
+</script>
+</head>
+<body>
+<div class="app">
+  <div class="top-header">
+    <div><h1>小川家の献立プランナー</h1><p>碧也・瑛太の食事管理</p></div>
+    <span class="offline-badge" id="sync-badge">⏳ 同期中...</span>
+  </div>
+  <div class="child-switcher">
+    <button class="child-btn aoya active" onclick="switchChild('aoya',this)">
+      <div class="child-btn-inner">
+        <div class="child-btn-info">
+          <span class="child-btn-name">碧也</span>
+          <span class="child-btn-sub">2025年9月29日生まれ</span>
+          <span class="child-btn-age">月齢6か月 · 離乳食初期</span>
+        </div>
+        <img class="child-photo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD52aQ5616v+zjpmo6v8Q7Gez+Sx0thdXch9MFVX6sTj8zXkQ+ZgB3r68/Zp8N3GlfDo3xt1E2q3BnBZ9hMSjah6HgncR9ad7bhZvY9G8YS7ri09GjYfkRXgV/n7XNzxvOPzr37XrO7fTo82zSSRzBg0T7yqkEMTwDjpXgV6pN1Jjk7icd+tYVnrodGHVlZlQHPXPT1prNnuOaU43EbhuB6bhxTJQR2IzzzWJ0WK7kLJGWI2hwx+mav+GNStbTUDvmQxK+1gTjKMMN+X9KzZTnjNZ1zErE9MHtVKRMonplxJBJ5TLOkkkDMu8MpyMZH1rI1y8Nvp148T4kwFTGMZY49fTNeemzRT8mV57cVPDCBgFmPtk1TmTY4n4eaTFqviK0GpI32BXDSp08wD+H2B7n0r7c0rX7U20SIYoo0QKkaYARQMAADoAK4LR/AEVlKGSJEPstdrZaY1vHgYx06CulM5H5Fu+8RwpbT5uI1jMTEOp6DB5/lXjulRW7WJmnkVsDDOw+aU9/wrrPilBNaeDr2W2QA741JVQMBmANcJboyWccWPlUbTWFafK0deGp89yprHiSCFlhht9qAY4AH6AUzTLuHVpUhQ7WJ+63Sm6jYwycOmT2PpTNEjttPuo324CtyTWftk1qbPDyT0DxO2neHphb6rYXySkfeSYbTxnIyOhFc3J4h8Nsf+Ymn/fJrrPi7eQ6tosUMfzTJgRMB6c4/LcK8WfTrkHlHq4uLRzTU4ux0uueIbGNIjozSyMSd4uE6emMVqaPf2FzZK815It9tLeSqDbn0ya4E6fc/3W/KtTw3YzDWbdZwViJYMx4A+U0NR3JTk3Y+9fsq56ChrYEY21VNzMRjece3WgXE23bvJ9z1/OtedGXs2cd8YZEtvCL2gVzPeOuwKueEZXbP5CvONTi+z2f+u8pRyz45x7V33xYhmmsNLuQzkwXDAnP8LL0/HFchqipIhDAEEAjIzXFWneZ62FpJU01uzjdPmhv/ADHtbvz0QkMM8g+9Z2oy7HCfaIoy3AD/AMRrpLC2sNOWfykih81vnKjG9j/WseXTdP1K4S5khjkkizsfJ6GpTVzVxlbzJvDOmzanqmmwXW3a0jk88HahI6/hXZ3Pg+1TI8gH3rndPmW21DT7i1ijjW1cyscZRMLjJznHWvZvCd5pniSwaaMD7RHgSIH+Xnoy+xreOHnOn7RbbHDWrwp1OR77nkd14UhXJWED8Kz28PpGTiID8K96l0SzYl9m5fQPkVmXWgWLEny2HsG4rN05Aq0TpvU8UD6CkI5rzf4tfEa38GyWWnm1kuJLqMyyNHIFMaA4GARyTz6cCuuMOZ2Ryynyq51Ot+JYLXMUGyQ/xswyPoB3+przK91BNQeeVQFbzXBUdsH/AAxWSfEFvqtnLeWU3mRyL8pIwVYYBUjsRmuZ1rXR4e1yOC6QmzvA0hcHBjffgNn0xjP0qsRRUoWitisHiHCpeb0Ze1W61W3jcWVjBLGx5eSUqfwGP61W0ye7NlNJexRQyMeEjbcPrWlPqRaLbsLsO+McfyrgvHN5djTnKSvGhYI3l8ZB6jNcEVzPlPVqVFBOR6l4IS3uLVjFL/p7ORHk8MvTaD65B6/T635LqTTXJtYvKRg0U0cQ8thnqOO/euB8C+XZeF7Wc3DrEI0uHYHIUgZJ9uB+lYejfEKdtSu31JmktbiYyLnkxDPAHtjtXv4aahT9k1ofNYlSqVPap6n1N4EsZLfTFuBJcyW86jy45CqiMem0Dj8Ca6CSIEHIqn4Yez/sWzOm3QmsTEpjdG3IQRnI/PNa0gV0YHBBFedJanWmVJ38iCaV0ZhGjOVUZY4BOAPXivij4l+JpPFHiK71GRWj3vmNC27y1xgL+A4r6k+MHjy28JaK1o1tNc3uoW8qRBQvlxjG0s5J6cnA74r401Jldy8eV9wQT+IropRsmzGpPmdjc8Caw1vezWDcJdLuAJ6SKOCPqMj8q7TxRp/9v6TlMG5SPfET3YY+X8eR+VeXaHY3883220t5pI7WZPMkVcrGSc5Y9gQDXpdpeYjG1vl7c9qbepJneDtdSeyFhdnbeW42qH4LKO31HStPxBapfeH9VAC5jtXcH3GCP5GsjV9Ltb25N0r/AGW8zuEyjhj/ALQ7/wA6hbUNUt7Oe1EEMwlRkMsL7g+QRyCeOv0rjdH95zRO5YlulyNamde6lcWnw7s7WLKrdgI7f3U3McfjxXIq7ZwvGTgew7mu6s0FvZWlnO8MzlUiEY+b5jgYx3FM8e+BW0aCO/0+Se4spGInJT/UdMZI7Ek444rqVRXscrg7XNb4LeNU8N+KrN764aDTrljDON52hSCFkZenBwc+gr6/t7yGWMlJFZcZyDwQehB71+e8DbrhsD7or2T4PfEL+xLVdF1eVntJZP3ErtnyGP8AD/uH9D7GnWg37yFSkk7M/9k=" alt="碧也">
+      </div>
+    </button>
+    <button class="child-btn eita" onclick="switchChild('eita',this)">
+      <div class="child-btn-inner">
+        <div class="child-btn-info">
+          <span class="child-btn-name">瑛太</span>
+          <span class="child-btn-sub">2023年5月20日生まれ</span>
+          <span class="child-btn-age">2歳10か月 · 幼児食</span>
+        </div>
+        <img class="child-photo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCxocTaZqhSRCCNykEZypGP61n+MJTb2F04BCHbGuBkjLDj6YBrQk1/R5TG0eows0W5QzNgkduo+tYutasjR26WNyCTKzMUfPygcD8z+lYt6HUkc3c+II7CzlkiG+cIdg8ssc4x6V0XgLUi+lW4LbhsHvVV9SuBBK0kskjhTtUtjJ7fhWHNrlrZSyDzcl2yVi4RW/vY9TSjG6FKVme1aVN5H75Y0LKcDcox+Va//CQ6h/EwHr8oNeMeGvETTvhb9rfjKpuyuQcEY6V6LpWoxX8BZHQyJw4HH44pXs7FWurnTxeJ7mNSXRXx/smrEXjJuA8arxyM8/yrltT1K20qASX3JPRB94j1x6fWqg1CC8j3RjAPGCKFO4Sp21aPQYfFyuQoRVz0YqDWjb60JRzKp79hXmCndJ3wB1zTlupoz6jPU9vpVczI5UePGBGOcA1ZtFiR8naAOTXB6z4gu9WaJrgxRmMEDyU8vOfXFb9n4gkv9Mlt/s0Efkqp3xoAxGccmpcGhqomN1nWSYDHbn53dsnvwcVhadpF5qMhKqx749an0NY7jWkgmOVyf1rvY5oNPaOOPMYZtiIiF5JMdTgdF96U6jjojSlRU/ekYlj4e+x4SaUBicgKCxx9BWq8ereFNTtNSRpHtJnBjmXJVj6HPf61u3mmtLbsBcS26vjzGjO1iPTcOR+FdHoEmlto8+iXkqC0uVADkFirdmySec4PNc6q9zseH0905W9t9Q1a8lYwTPvb77nAAP1OT+FT6eLvR/tcUlx5sFsisWPzMWP8J9+v4VYj17TLa6sNLNyJ9VB8l3j/AIWXIx7E4q5qdrb2OiCPczB5QGdXDnce7URbi+xUoqpHTW1y3p2uWt3H+7lXzO65wR+FacM8bjG4HnGOhrzXWNOXAdR86/xA4I/GotPvdTgH7m5Lr/dmG79etddjzLmbL4Cljb5hU1j4XlsoLtIlDNPHswe2DkY/Gvou58JM5IPlAdjnrWRN4Ol3HBiA9c1ztzNl7M+aNP0HVYNTS+S3dUhYFyw4/wA8V6hDJAYBdhRhlBHbPpmum8VaGdJ0S4vrrCpAVKFDkliwAGPx/IGuSuH/ANAmMWCrBdiDAHU8j2PFKfNJXasdWH5I6RdzNutUjuJTD5wkeP7wkbaiH6Dlj7VFZS3PlXNxO6spYCMbNuD0rNsdaTzJGa1E6hypK8YYcEHNJqOpXN4QJF8mBTkIOKjltpY2dWLV0zc07RtEbVLy+WWa7vLWcTGRZyoV93IZNvTp3qxPqkzyOqWyMkLq7CQDZx047/jXIfDO6Z5dbvJS32eRm3gNwwwTj8q3dJ1CHVNLSa0mVUcBpE6uDj7prqxUX7sjhwNWKUoeZtXgSSM7SDk9B2rLsgFnKn1xXIReKJNO1S7tLtf3KzbIii9FbkD8OldBpupQ3EgkikBz/nmrasjlvrY+ofCt1f3uneZqUsUqvgwyopy49ScAfkBVrU3hsrOa6uN4ihUu21dzEew7n271J4b8qPRbJLa6S4tfKUxyAhgwIzkMOtW9SsYNRs5bW6QPBKpV17MD2qpJXM0zwP44+NNMdNB0ezvYJ7e6uxJeFTykalQAR2zubr6dK5TxBqk17qzt5arGE2r8gUAA8cDuB3rD+M2lW+jfE6YNqT6itrFC374bnSTqsTHodo2knqQRnk1k+K/ECPpYureXEsxChSPuMev5c1OIptqCWx1YStGHO3uVtbmfTNVbULbd9luCFnT/AGuz/wAqg1nW4jYMIMtNINq9zk8VeVvtFrtnTfuXLKRnd04qfTdD0u3kS4t4Pn/hZ3LBfoD0NaOnFtNmCqySaWxo+GrL+xdChtpx80ybpv8AecNx+AAFebyxS2Dy25dg0bbSVOMjtXqWoThydhyE8v8AQn/GvOfE1nJa6jI5JMTkkN/Q/pXTFps5WmZ9vJG9yiXWWiYgk57g8VvbZbaTzI9wIPDrXJufm4rtPDOmzahpCzDcrB2QNn7wH+cVFWOlyoHZfAnx3H4d8SRW+q3Lw6beKYnBY7Im/gcjoORgkdj7V9ZWuoW8saMsqlGxg5HIPceo96/Pi2JaSQjjHGfevafhL8QHs7a38OX8gW2UbbWdjjyz/cJ9D2Pbp06FaDfvIKUlflZ5Z8RdTk1Hxvrc7qU8y9lbae3ztWDHBNqdxBbQh3lOSFHPQZJ/IV6p8WvA1zc63LqmkRKBOS86Fj989WH16ketYfg61k0FpZJ7KOeeUbTLuO5V9F7ColWi4mkaMrmAuq3FqiRXiklBsMkeQce49asW3iFGiCPIzSjsy7QPfI/rXYX+nadqZ3GNopD6isabwzFGcoqsPUVzuojpjBpGXPrLOjhGzwB97A/xqld3SX+yBo5ZVVOXB2gtx09hW+mkIh+4Pyq7a6au4ZWkqttUEoOSsznNH8Gy6lOu68WCHPzM0ZYgewHWvW7DS7DS9Nt7KzEksUS438ZJ6kkcckmszToViACjFbcB7GplWlLRlRoRR//Z" alt="瑛太">
+      </div>
+    </button>
+  </div>
+  <div class="shared-tab-bar">
+    <button class="shared-tab active" id="stab-aoya" onclick="switchSharedTab('aoya-main','stab-aoya')">碧也の管理</button>
+    <button class="shared-tab" id="stab-eita" onclick="switchSharedTab('eita-main','stab-eita')">瑛太の管理</button>
+    <button class="shared-tab" id="stab-ai" onclick="switchSharedTab('ai-assistant','stab-ai')">AIアシスタント</button>
+    <button class="shared-tab" id="stab-photo" onclick="switchSharedTab('photo-nutr','stab-photo')">栄養解析</button>
+    <button class="shared-tab" id="stab-nutrition" onclick="switchSharedTab('nutrition-chart','stab-nutrition')">栄養バランス</button>
+    <button class="shared-tab" id="stab-growth" onclick="switchSharedTab('growth-chart','stab-growth')">成長曲線</button>
+  </div>
+
+  <!-- 碧也ページ -->
+  <div class="shared-section active" id="aoya-main">
+    <div class="page-header">
+      <div><h2>碧也の離乳食プランナー</h2><p>月齢6か月 · 離乳食初期（ゴックン期）· 1回食</p></div>
+      <span class="badge-blue">碧也用</span>
+    </div>
+    <div class="inner-tabs">
+      <button class="inner-tab active" onclick="switchInner('aoya','cal',this)">献立</button>
+      <button class="inner-tab" onclick="switchInner('aoya','tip',this)">ポイント</button>
+    </div>
+    <div class="inner-section active" id="aoya-cal">
+      <div class="month-nav">
+        <button class="nav-btn" onclick="aoyaChgMonth(-1)">前月</button>
+        <h3 id="aoya-mlabel"></h3>
+        <button class="nav-btn" onclick="aoyaChgMonth(1)">次月</button>
+      </div>
+      <div class="k-legend">
+        <span>完食度:</span>
+        <span><span class="k-dot" style="background:#185FA5;"></span>全完食(100%)</span>
+        <span><span class="k-dot" style="background:#85B7EB;"></span>概ね食べた(75%)</span>
+        <span><span class="k-dot" style="background:#FAC775;"></span>半分(50%)</span>
+        <span><span class="k-dot" style="background:#F09595;"></span>少ない(25%)</span>
+      </div>
+      <div class="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div></div>
+      <div class="cal-grid" id="aoya-cal-body" style="margin-top:3px;"></div>
+      <div class="detail-panel"><h4 id="aoya-det-date">日付をタップしてください</h4><div id="aoya-det-body"><p style="font-size:12px;color:#b4b2a9;">日付をタップすると献立が表示されます。</p></div></div>
+      <!-- 週次AI評価 -->
+      <div class="weekly-eval-box">
+        <p class="weekly-eval-title">週次AI栄養評価・献立改善提案（Gemini）</p>
+        <div class="week-eval-btns" id="aoya-weval-btns"></div>
+        <div class="weval-summary" id="aoya-weval-summary">週を選択すると完食度の集計が表示されます</div>
+        <button class="weval-run-btn-b" id="aoya-weval-btn" onclick="runWeeklyEval('aoya')">この週をAIに評価してもらう</button>
+        <div class="weval-result" id="aoya-weval-result"></div>
+        <div class="improve-proposal-box" id="aoya-improve-box">
+          <p class="improve-proposal-title">次週以降の献立を改善提案に基づいて組み替えますか？</p>
+          <div class="improve-week-select-row">
+            <span class="improve-week-label">組み替え対象の週：</span>
+            <select class="transcribe-select" id="aoya-improve-week-sel"></select>
+          </div>
+          <button class="improve-apply-btn" id="aoya-improve-gen-btn" onclick="generateImprovedMenu('aoya')">次週の改善献立を生成する</button>
+          <div class="improve-preview-box" id="aoya-improve-preview"></div>
+          <div class="improve-confirm-btns" id="aoya-improve-confirm" style="display:none;">
+            <button class="confirm-yes-btn" onclick="applyImprovedMenu('aoya')">この献立で組み替える</button>
+            <button class="confirm-no-btn" onclick="cancelImprovedMenu('aoya')">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="inner-section" id="aoya-tip">
+      <p class="sec-title">離乳食初期（6か月）のポイント</p>
+      <div class="tips-grid" id="aoya-tips-grid"></div>
+      <div class="schedule-box">
+        <p style="font-size:12px;font-weight:600;margin-bottom:8px;">1日のスケジュール目安</p>
+        <div class="sch-row"><span class="sch-time" style="color:#185FA5;">10:00頃</span><span>離乳食（1回）＋母乳・ミルク</span></div>
+        <div class="sch-row"><span class="sch-time" style="color:#888780;">14:00頃</span><span>母乳・ミルクのみ</span></div>
+        <div class="sch-row"><span class="sch-time" style="color:#888780;">2か月後</span><span>2回食へ（7〜8か月頃）</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 瑛太ページ -->
+  <div class="shared-section" id="eita-main">
+    <div class="page-header">
+      <div><h2>瑛太の幼児食プランナー</h2><p>2歳10か月 · 幼児食 · 3食＋おやつ</p></div>
+      <span class="badge-green">瑛太用</span>
+    </div>
+    <div class="inner-tabs">
+      <button class="inner-tab active" onclick="switchInner('eita','cal',this)">献立</button>
+      <button class="inner-tab" onclick="switchInner('eita','tip',this)">ポイント</button>
+    </div>
+    <div class="inner-section active" id="eita-cal">
+      <div class="month-nav">
+        <button class="nav-btn" onclick="eitaChgMonth(-1)">前月</button>
+        <h3 id="eita-mlabel"></h3>
+        <button class="nav-btn" onclick="eitaChgMonth(1)">次月</button>
+      </div>
+      <div class="k-legend">
+        <span>完食度:</span>
+        <span><span class="k-dot" style="background:#1D9E75;"></span>全完食(100%)</span>
+        <span><span class="k-dot" style="background:#9FE1CB;"></span>概ね食べた(75%)</span>
+        <span><span class="k-dot" style="background:#FAC775;"></span>半分(50%)</span>
+        <span><span class="k-dot" style="background:#F09595;"></span>少ない(25%)</span>
+      </div>
+      <div class="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div></div>
+      <div class="cal-grid" id="eita-cal-body" style="margin-top:3px;"></div>
+      <div class="detail-panel"><h4 id="eita-det-date">日付をタップしてください</h4><div id="eita-det-body"><p style="font-size:12px;color:#b4b2a9;">日付をタップすると献立が表示されます。</p></div></div>
+      <!-- 週次AI評価 -->
+      <div class="weekly-eval-box">
+        <p class="weekly-eval-title">週次AI栄養評価・献立改善提案（Gemini）</p>
+        <div class="week-eval-btns" id="eita-weval-btns"></div>
+        <div class="weval-summary" id="eita-weval-summary">週を選択すると完食度の集計が表示されます</div>
+        <button class="weval-run-btn-g" id="eita-weval-btn" onclick="runWeeklyEval('eita')">この週をAIに評価してもらう</button>
+        <div class="weval-result" id="eita-weval-result"></div>
+        <div class="improve-proposal-box" id="eita-improve-box">
+          <p class="improve-proposal-title">次週以降の献立を改善提案に基づいて組み替えますか？</p>
+          <div class="improve-week-select-row">
+            <span class="improve-week-label">組み替え対象の週：</span>
+            <select class="transcribe-select" id="eita-improve-week-sel"></select>
+          </div>
+          <button class="improve-apply-btn blue" id="eita-improve-gen-btn" onclick="generateImprovedMenu('eita')">次週の改善献立を生成する</button>
+          <div class="improve-preview-box" id="eita-improve-preview"></div>
+          <div class="improve-confirm-btns" id="eita-improve-confirm" style="display:none;">
+            <button class="confirm-yes-btn blue" onclick="applyImprovedMenu('eita')">この献立で組み替える</button>
+            <button class="confirm-no-btn" onclick="cancelImprovedMenu('eita')">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="inner-section" id="eita-tip">
+      <p class="sec-title">幼児食（2歳〜）のポイント</p>
+      <div class="tips-grid" id="eita-tips-grid"></div>
+      <div class="schedule-box">
+        <p style="font-size:12px;font-weight:600;margin-bottom:8px;">1日のスケジュール目安</p>
+        <div class="sch-row"><span class="sch-time" style="color:#1D9E75;">朝食</span><span>7〜8時頃 ご飯・おかず・汁物</span></div>
+        <div class="sch-row"><span class="sch-time" style="color:#1D9E75;">昼食</span><span>12時頃 主食＋主菜＋副菜</span></div>
+        <div class="sch-row"><span class="sch-time" style="color:#1D9E75;">おやつ</span><span>15時頃 果物・乳製品など</span></div>
+        <div class="sch-row"><span class="sch-time" style="color:#1D9E75;">夕食</span><span>18〜19時 主食＋主菜＋副菜</span></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 料理写真栄養解析 -->
+  <div class="shared-section" id="photo-nutr">
+    <div class="page-header">
+      <div><h2>料理写真 栄養解析</h2><p>写真を撮るだけでAIが食材・栄養素を自動推定</p></div>
+      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#EEEDFE;color:#534AB7;font-weight:600;">Gemini Vision</span>
+    </div>
+
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">解析対象の子ども</p>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button class="ai-sel-chip on" id="photo-child-aoya" onclick="togglePhotoChild('aoya')">碧也</button>
+        <button class="ai-sel-chip" id="photo-child-eita" onclick="togglePhotoChild('eita')">瑛太</button>
+      </div>
+
+      <p class="ai-feature-title">料理・食事の写真を選ぶ</p>
+      <p class="ai-feature-desc" style="margin-bottom:8px;">お皿全体が写るように撮影すると精度が上がります。家族の顔が写る場合はトリミングしてください。</p>
+
+      <!-- アップロードエリア -->
+      <div class="photo-upload-area" id="photo-upload-area" onclick="document.getElementById('photo-file-input').click()">
+        <div id="photo-upload-placeholder">
+          <div style="font-size:32px;margin-bottom:6px;"></div>
+          <p style="font-size:13px;font-weight:600;color:#5f5e5a;margin-bottom:2px;">写真を選ぶ・撮影する</p>
+          <p style="font-size:10px;color:#b4b2a9;">JPG・PNG・HEIC対応</p>
+        </div>
+        <img id="photo-preview" class="photo-preview" alt="プレビュー">
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onPhotoSelected(event)">
+
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button onclick="document.getElementById('photo-file-input').click()" style="flex:1;padding:8px;border:1px solid #d3d1c7;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit;">ファイル選択</button>
+        <button onclick="clearPhoto()" style="padding:8px 12px;border:1px solid #F7C1C1;border-radius:8px;font-size:12px;background:#FCEBEB;color:#791F1F;cursor:pointer;font-family:inherit;">クリア</button>
+      </div>
+
+      <button class="ai-run-btn purple" id="photo-analyze-btn" onclick="analyzePhoto()" disabled style="margin-bottom:10px;">AIで栄養を解析する</button>
+
+      <!-- 結果表示 -->
+      <div id="photo-result-area" style="display:none;">
+        <div style="margin-bottom:8px;padding:10px;background:#f7f5ff;border-radius:8px;border:1px solid #AFA9EC;">
+          <p style="font-size:11px;font-weight:600;color:#534AB7;margin-bottom:4px;">認識された食材・料理</p>
+          <div id="photo-food-tags"></div>
+        </div>
+        <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:6px;">推定栄養素（1人前あたり）</p>
+        <div class="nutr-result-grid" id="photo-nutr-grid"></div>
+        <div style="margin-top:10px;padding:10px;background:#f7f6f2;border-radius:8px;">
+          <p style="font-size:11px;font-weight:600;color:#2c2c2a;margin-bottom:4px;">AIコメント</p>
+          <div id="photo-ai-comment" style="font-size:12px;color:#2c2c2a;line-height:1.7;"></div>
+        </div>
+        <p style="font-size:9px;color:#b4b2a9;margin-top:6px;">※推定値です。実際の栄養素は調理法・食材の量により異なります。</p>
+      </div>
+      <div class="ai-output" id="photo-ai-output"></div>
+    </div>
+
+    <!-- 解析履歴 -->
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">解析履歴</p>
+      <p class="ai-feature-desc">直近の解析結果を記録します。</p>
+      <div id="photo-history" style="font-size:12px;color:#888780;">解析履歴はありません</div>
+    </div>
+  </div>
+
+  <!-- AIアシスタント -->
+  <div class="shared-section" id="ai-assistant">
+    <div class="page-header">
+      <div><h2>AIアシスタント</h2><p>Geminiが食事記録を分析・提案します</p></div>
+      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#EEEDFE;color:#534AB7;font-weight:600;">Gemini連携</span>
+    </div>
+
+    <!-- 機能1: 完食記録の日次要約 -->
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">1. 今日の完食記録を要約する</p>
+      <p class="ai-feature-desc">食事内容と完食度・体調メモを入力すると、AIが傾向分析と明日の提案をします。</p>
+      <div style="margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;">対象の子ども</span>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="ai-sel-chip" id="daily-child-aoya" onclick="toggleDailyChild('aoya')">碧也</button>
+          <button class="ai-sel-chip on" id="daily-child-eita" onclick="toggleDailyChild('eita')">瑛太</button>
+        </div>
+      </div>
+      <!-- カレンダーから転記 -->
+      <div class="transcribe-box">
+        <span class="transcribe-title">カレンダーから献立・完食度を転記する</span>
+        <div class="transcribe-row">
+          <select class="transcribe-select" id="transcribe-year" onchange="updateTranscribeDays()"></select>
+          <select class="transcribe-select" id="transcribe-month" onchange="updateTranscribeDays()"></select>
+          <select class="transcribe-select" id="transcribe-day"></select>
+          <button class="transcribe-btn" onclick="doTranscribe()">転記する</button>
+        </div>
+        <p class="transcribe-note">選択した日のカレンダー献立と記録済み完食度を下のテキストエリアに自動入力します</p>
+      </div>
+      <label class="ai-sub-label">食事内容と完食度（転記後に体調メモを追記できます）</label>
+      <textarea class="ai-textarea" id="daily-meals-input" placeholder="例:&#10;朝：10倍粥 100%、にんじんペースト 75%&#10;昼：かぼちゃペースト 50%&#10;夕：（なし）&#10;メモ：少し眠そうだった"></textarea>
+      <button class="ai-run-btn blue" id="daily-run-btn" onclick="runDailySummary()">今日の食事をAIに要約してもらう</button>
+      <div class="ai-output" id="daily-ai-output"></div>
+    </div>
+
+    <!-- 機能2: 苦手食材・傾向分析 -->
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">2. 苦手食材・食事傾向を分析する</p>
+      <p class="ai-feature-desc">完食度の記録データをもとに、AIが食べやすい料理法・苦手傾向・体調との相関を分析します。</p>
+      <div style="margin-bottom:8px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;">対象の子ども</span>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="ai-sel-chip" id="trend-child-aoya" onclick="toggleTrendChild('aoya')">碧也</button>
+          <button class="ai-sel-chip on" id="trend-child-eita" onclick="toggleTrendChild('eita')">瑛太</button>
+        </div>
+      </div>
+      <label class="ai-sub-label">苦手だと感じる食材（タップで選択）</label>
+      <div class="ai-chip-row" id="dislike-chips">
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'ブロッコリー')">ブロッコリー</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'にんじん')">にんじん</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'ほうれん草')">ほうれん草</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'かぼちゃ')">かぼちゃ</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'肉類')">肉類</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'魚')">魚</button>
+        <button class="ai-sel-chip" onclick="toggleDislike(this,'豆腐')">豆腐</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-short-input" id="dislike-custom" placeholder="その他（例：固い食材）">
+        <button class="ai-add-chip-btn" onclick="addDislikeChip()">追加</button>
+      </div>
+      <label class="ai-sub-label">気になっていること・相談したいこと（任意）</label>
+      <textarea class="ai-textarea" id="trend-memo" placeholder="例：夜より昼の方が食べる気がする。麺類の日は完食しやすい。" style="min-height:60px;"></textarea>
+      <button class="ai-run-btn green" id="trend-run-btn" onclick="runTrendAnalysis()">傾向をAIに分析してもらう</button>
+      <div class="ai-output" id="trend-ai-output"></div>
+    </div>
+
+    <!-- 機能3: 献立提案 -->
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">3. 現実的な献立を提案してもらう</p>
+      <p class="ai-feature-desc">冷蔵庫の食材・調理時間などの条件を入力すると、AIが実用的な献立3案を提案します。</p>
+      <div style="margin-bottom:8px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;">対象の子ども</span>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="ai-sel-chip" id="menu-child-aoya" onclick="toggleMenuChild('aoya')">碧也</button>
+          <button class="ai-sel-chip on" id="menu-child-eita" onclick="toggleMenuChild('eita')">瑛太</button>
+        </div>
+      </div>
+      <label class="ai-sub-label">冷蔵庫にある食材（タップで選択）</label>
+      <div class="ai-chip-row" id="fridge-chips">
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'にんじん')">にんじん</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'かぼちゃ')">かぼちゃ</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'じゃがいも')">じゃがいも</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'卵')">卵</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'豆腐')">豆腐</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'鶏肉')">鶏肉</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'豚肉')">豚肉</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'うどん')">うどん</button>
+        <button class="ai-sel-chip" onclick="toggleFridge(this,'ほうれん草')">ほうれん草</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-short-input" id="fridge-custom" placeholder="その他の食材を追加">
+        <button class="ai-add-chip-btn" onclick="addFridgeChip()">追加</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="ai-sub-label">調理時間の目安</label>
+          <select class="modal-select" id="cook-time">
+            <option>15分以内</option>
+            <option selected>20分以内</option>
+            <option>30分以内</option>
+            <option>時間は気にしない</option>
+          </select>
+        </div>
+        <div>
+          <label class="ai-sub-label">直近3日に使った食材</label>
+          <input class="ai-short-input" id="recent-used" placeholder="例：卵、うどん" style="width:100%;">
+        </div>
+      </div>
+      <button class="ai-run-btn purple" id="menu-run-btn" onclick="runMenuProposal()">献立3案をAIに提案してもらう</button>
+      <div class="ai-output" id="menu-ai-output"></div>
+    </div>
+
+    <!-- 機能4: 買い物リスト自動生成 -->
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">4. 2人分まとめ買いリストをAIに作ってもらう</p>
+      <p class="ai-feature-desc">碧也・瑛太それぞれの今週の食材状況をもとに、2人分の買い物リストを誰用か明示しながらまとめて出力します。</p>
+      <label class="ai-sub-label">碧也（離乳食）の今週の状況</label>
+      <textarea class="ai-textarea" id="shopping-memo-aoya" placeholder="例:&#10;よく食べた：10倍粥、にんじんペースト&#10;食べなかった：ほうれん草&#10;余った：豆腐&#10;体調：普通" style="min-height:70px;"></textarea>
+      <label class="ai-sub-label" style="margin-top:8px;">瑛太（幼児食）の今週の状況</label>
+      <textarea class="ai-textarea" id="shopping-memo-eita" placeholder="例:&#10;よく食べた：うどん、卵焼き&#10;食べなかった：ブロッコリー&#10;余った：小松菜&#10;体調：普通" style="min-height:70px;"></textarea>
+      <button class="ai-run-btn amber" id="shopping-run-btn" onclick="runShoppingList()" style="margin-top:10px;">2人分まとめ買いリストをAIに作ってもらう</button>
+      <div class="ai-output" id="shopping-ai-output"></div>
+    </div>
+  </div>
+
+  <!-- 成長曲線 -->
+  <div class="shared-section" id="growth-chart">
+    <div class="page-header">
+      <div><h2>成長曲線チャート</h2><p>標準成長曲線との比較・将来予測</p></div>
+      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#E1F5EE;color:#085041;font-weight:600;">成長記録</span>
+    </div>
+
+    <!-- 碧也 -->
+    <div class="growth-card" style="border-color:#AFA9EC;">
+      <p class="growth-card-title" style="color:#185FA5;">碧也の成長記録（月齢0〜24か月）</p>
+      <p style="font-size:11px;color:#888780;margin-bottom:10px;">標準値は<strong>男の子</strong>の成長曲線（厚労省2010年調査）を使用しています</p>
+      <div class="growth-input-grid">
+        <div class="growth-input-row">
+          <label class="growth-input-label">月齢（か月）</label>
+          <input class="growth-input" id="aoya-growth-age" type="number" min="0" max="24" placeholder="例: 6">
+        </div>
+        <div class="growth-input-row">
+          <label class="growth-input-label">身長（cm）</label>
+          <input class="growth-input" id="aoya-growth-height" type="number" step="0.1" placeholder="例: 67.5">
+        </div>
+        <div class="growth-input-row">
+          <label class="growth-input-label">体重（kg）</label>
+          <input class="growth-input" id="aoya-growth-weight" type="number" step="0.01" placeholder="例: 7.8">
+        </div>
+        <div class="growth-input-row" style="justify-content:flex-end;">
+          <label class="growth-input-label">&nbsp;</label>
+          <button class="growth-add-btn" style="background:#185FA5;color:#fff;" onclick="addGrowthRecord('aoya')">追加する</button>
+        </div>
+      </div>
+      <!-- 月齢レンジ選択 -->
+      <div style="margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;margin-right:8px;">表示範囲：</span>
+        <span style="font-size:11px;color:#888780;margin-right:4px;">0か月〜</span>
+        <select id="aoya-range-sel" onchange="renderGrowthCharts('aoya')" style="padding:4px 8px;border:1px solid #d3d1c7;border-radius:6px;font-size:12px;font-family:inherit;">
+          <option value="12">12か月（1歳）</option>
+          <option value="24" selected>24か月（2歳）</option>
+          <option value="36">36か月（3歳）</option>
+          <option value="48">48か月（4歳）</option>
+          <option value="60">60か月（5歳）</option>
+          <option value="72">72か月（6歳）</option>
+        </select>
+      </div>
+      <div class="growth-legend">
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:rgba(24,95,165,0.15);height:8px;border-radius:2px;"></div><span>正常範囲（3〜97%ile）</span></div>
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:#185FA5;"></div><span>50パーセンタイル（中央値）</span></div>
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:#E63946;"></div><span>碧也の実測値</span></div>
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:#E63946;border-top:2px dashed #E63946;height:0;"></div><span>将来予測</span></div>
+      </div>
+      <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:4px;">身長（cm）</p>
+      <div class="growth-chart-wrap"><canvas id="aoya-height-chart"></canvas></div>
+      <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:4px;">体重（kg）</p>
+      <div class="growth-chart-wrap"><canvas id="aoya-weight-chart"></canvas></div>
+      <div class="growth-records" id="aoya-growth-records"></div>
+    </div>
+
+    <!-- 瑛太 -->
+    <div class="growth-card" style="border-color:#9FE1CB;">
+      <p class="growth-card-title" style="color:#1D9E75;">瑛太の成長記録（月齢0〜72か月）</p>
+      <p style="font-size:11px;color:#888780;margin-bottom:10px;">標準値は<strong>男の子</strong>の成長曲線（厚労省2010年調査）を使用しています</p>
+      <div class="growth-input-grid">
+        <div class="growth-input-row">
+          <label class="growth-input-label">月齢（か月）</label>
+          <input class="growth-input" id="eita-growth-age" type="number" min="0" max="72" placeholder="例: 34">
+        </div>
+        <div class="growth-input-row">
+          <label class="growth-input-label">身長（cm）</label>
+          <input class="growth-input" id="eita-growth-height" type="number" step="0.1" placeholder="例: 92.0">
+        </div>
+        <div class="growth-input-row">
+          <label class="growth-input-label">体重（kg）</label>
+          <input class="growth-input" id="eita-growth-weight" type="number" step="0.01" placeholder="例: 13.5">
+        </div>
+        <div class="growth-input-row" style="justify-content:flex-end;">
+          <label class="growth-input-label">&nbsp;</label>
+          <button class="growth-add-btn" style="background:#1D9E75;color:#fff;" onclick="addGrowthRecord('eita')">追加する</button>
+        </div>
+      </div>
+      <!-- 月齢レンジ選択 -->
+      <div style="margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;margin-right:8px;">表示範囲：</span>
+        <span style="font-size:11px;color:#888780;margin-right:4px;">0か月〜</span>
+        <select id="eita-range-sel" onchange="renderGrowthCharts('eita')" style="padding:4px 8px;border:1px solid #d3d1c7;border-radius:6px;font-size:12px;font-family:inherit;">
+          <option value="12">12か月（1歳）</option>
+          <option value="24">24か月（2歳）</option>
+          <option value="36" selected>36か月（3歳）</option>
+          <option value="48">48か月（4歳）</option>
+          <option value="60">60か月（5歳）</option>
+          <option value="72">72か月（6歳）</option>
+        </select>
+      </div>
+      <div class="growth-legend">
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:rgba(29,158,117,0.15);height:8px;border-radius:2px;"></div><span>正常範囲（3〜97%ile）</span></div>
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:#1D9E75;"></div><span>50パーセンタイル（中央値）</span></div>
+        <div class="growth-legend-item"><div class="growth-legend-line" style="background:#E63946;"></div><span>瑛太の実測値</span></div>
+      </div>
+      <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:4px;">身長（cm）</p>
+      <div class="growth-chart-wrap"><canvas id="eita-height-chart"></canvas></div>
+      <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:4px;">体重（kg）</p>
+      <div class="growth-chart-wrap"><canvas id="eita-weight-chart"></canvas></div>
+      <div class="growth-records" id="eita-growth-records"></div>
+    </div>
+    <p style="font-size:10px;color:#b4b2a9;padding:0 4px 12px;">参考：厚生労働省「乳幼児身体発育調査（2010年）」男児データに基づく成長曲線。個人差があるため、気になる場合はかかりつけ医にご相談ください。</p>
+  </div>
+  <!-- 栄養バランスチャート -->
+  <div class="shared-section" id="nutrition-chart">
+    <div class="page-header">
+      <div><h2>栄養バランスチャート</h2><p>完食度から算出した月次栄養素と標準摂取量の比較</p></div>
+      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#FAEEDA;color:#633806;font-weight:600;">月次分析</span>
+    </div>
+    <div class="nutrition-month-sel">
+      <span class="nutrition-month-label">対象月：</span>
+      <select class="transcribe-select" id="nutrition-year-sel" onchange="renderNutritionCharts()"></select>
+      <select class="transcribe-select" id="nutrition-month-sel" onchange="renderNutritionCharts()"></select>
+    </div>
+    <div class="nutrition-legend">
+      <div class="nleg-item"><div class="nleg-dot" style="background:#185FA5;"></div><span>碧也の摂取量</span></div>
+      <div class="nleg-item"><div class="nleg-dot" style="background:#1D9E75;"></div><span>瑛太の摂取量</span></div>
+      <div class="nleg-item"><div class="nleg-dot" style="background:#e0ddd6;"></div><span>標準摂取量（100%）</span></div>
+    </div>
+    <div class="nutrition-card">
+      <p class="nutrition-card-title">碧也 の栄養バランス</p>
+      <p class="nutrition-card-sub">月齢6か月 · 離乳食初期 · 完食度記録から算出（母乳・ミルク分は含まず）</p>
+      <div class="radar-container"><canvas id="aoya-radar-chart"></canvas></div>
+      <div class="nutrient-bars" id="aoya-nutrient-bars"></div>
+      <p class="nutrition-note">※ 離乳食初期は栄養の主役はまだ母乳・ミルクです。離乳食からの栄養補完の参考としてご覧ください。</p>
+    </div>
+    <div class="nutrition-card">
+      <p class="nutrition-card-title">瑛太 の栄養バランス</p>
+      <p class="nutrition-card-sub">2歳10か月 · 幼児食 · 完食度記録から算出</p>
+      <div class="radar-container"><canvas id="eita-radar-chart"></canvas></div>
+      <div class="nutrient-bars" id="eita-nutrient-bars"></div>
+      <p class="nutrition-note">※ 日本人の食事摂取基準（2020年版）の推奨量・目安量を基準値として使用しています。</p>
+    </div>
+    <div class="nutrition-card">
+      <p class="nutrition-card-title">2人の栄養充足率比較</p>
+      <p class="nutrition-card-sub">各栄養素の標準摂取量に対する充足率（%）</p>
+      <div style="position:relative;height:300px;width:100%;overflow:hidden;"><canvas id="compare-bar-chart"></canvas></div>
+    </div>
+
+    <!-- 栄養バランス AI評価カード -->
+    <div class="nutrition-card" style="border-color:#AFA9EC;">
+      <p class="nutrition-card-title" style="color:#3C3489;">栄養バランスをAIに評価してもらう</p>
+      <p class="nutrition-card-sub">チャートのデータをGeminiに分析させ、不足栄養素の改善提案と翌週以降の献立修正を行います。</p>
+      <div style="margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:600;color:#888780;">評価対象の子ども</span>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="ai-sel-chip" id="nutr-child-aoya" onclick="toggleNutrChild('aoya')">碧也</button>
+          <button class="ai-sel-chip on" id="nutr-child-eita" onclick="toggleNutrChild('eita')">瑛太</button>
+          <button class="ai-sel-chip" id="nutr-child-both" onclick="toggleNutrChild('both')">2人まとめて</button>
+        </div>
+      </div>
+      <button class="ai-run-btn purple" id="nutr-eval-btn" onclick="runNutritionEval()" style="margin-bottom:10px;">栄養バランスをAIに評価してもらう</button>
+      <div class="ai-output" id="nutr-eval-output"></div>
+
+      <!-- 献立修正ボックス -->
+      <div class="improve-proposal-box" id="nutr-improve-box" style="border-color:#AFA9EC;background:#f7f5ff;">
+        <p class="improve-proposal-title" style="color:#3C3489;">評価内容をもとに翌週以降の献立を修正しますか？</p>
+        <div class="improve-week-select-row">
+          <span class="improve-week-label">対象の子ども：</span>
+          <select class="transcribe-select" id="nutr-improve-child-sel" onchange="updateNutrImproveWeekSel()">
+            <option value="aoya">碧也</option>
+            <option value="eita" selected>瑛太</option>
+          </select>
+          <span class="improve-week-label" style="margin-left:8px;">修正する週：</span>
+          <select class="transcribe-select" id="nutr-improve-week-sel"></select>
+        </div>
+        <button class="improve-apply-btn" id="nutr-improve-gen-btn" onclick="generateNutrImprovedMenu()" style="background:#534AB7;">栄養改善献立を生成する</button>
+        <div class="improve-preview-box" id="nutr-improve-preview"></div>
+        <div class="improve-confirm-btns" id="nutr-improve-confirm" style="display:none;">
+          <button class="confirm-yes-btn" style="background:#534AB7;" onclick="applyNutrImprovedMenu()">この献立で組み替える</button>
+          <button class="confirm-no-btn" onclick="cancelNutrImprovedMenu()">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const DOW=['日','月','火','水','木','金','土'];
+const WLBL=['第1週','第2週','第3週','第4週'];
+const TAGLBL={grain:'穀物',veg:'野菜',protein:'たんぱく質',dairy:'乳製品',fruit:'果物',other:'その他'};
+
+let aY=2026,aMo=3,aSel=null,aOR=-1;
+let eY=2026,eMo=3,eSel=null,eOR=-1;
+
+const aMenu=[
+  [{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''}],
+  [{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''}],
+  [{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''}],
+  [{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''},{b:'',l:''}],
+];
+const aTips=[
+  {lbl:'量',title:'量の目安',body:'最初はティースプーン1〜2杯から。慣れてきたら少しずつ増やします。'},
+  {lbl:'温度',title:'温度は人肌',body:'37℃前後に冷ましてから与えましょう。'},
+  {lbl:'時間',title:'時間は一定に',body:'毎日同じ時間に与えることでリズムが整います。午前中がおすすめ。'},
+  {lbl:'形状',title:'食材の形状',body:'すべてなめらかなペースト状が基本。裏ごしをしっかりと。'},
+  {lbl:'冷凍',title:'まとめて冷凍OK',body:'製氷皿で冷凍すると1回分ずつ使えて便利。2週間以内に使い切りを。'},
+  {lbl:'共通',title:'兄弟で食材を共有',body:'にんじん・かぼちゃ・豆腐は瑛太の食事と同じものを使えます。一緒に下ごしらえすると時短に。'},
+];
+
+const eMenu=[
+  [{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''}],
+  [{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''}],
+  [{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''}],
+  [{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''},{b:'',l:'',d:''}],
+];
+const eTips=[
+  {lbl:'塩分',title:'塩分は大人の半分以下',body:'幼児の塩分目安は1日3g未満。薄味に慣れさせましょう。'},
+  {lbl:'切り方',title:'小さく切って',body:'1口大（1〜2cm）を目安に。喉に詰まらないよう注意。'},
+  {lbl:'共通',title:'兄弟で食材を共有',body:'にんじん・かぼちゃ・豆腐・ほうれん草は碧也の離乳食と同じものを使えます。先に碧也用を取り分けてから調理すると効率的です。'},
+  {lbl:'牛乳',title:'牛乳は1日400ml以内',body:'鉄分の吸収を妨げるため飲みすぎに注意。'},
+  {lbl:'禁止',title:'避けたいもの',body:'ナッツ類・生魚・生卵は3歳以降に。辛いもの・カフェインも避ける。'},
+  {lbl:'楽しく',title:'食事は楽しく',body:'食わず嫌いも多い時期。一緒に食べて声かけを。'},
+];
+
+const sharedIng=[[],[],[],[]];
+
+function switchChild(child,btn){
+  // 子どもカードの切り替え
+  document.querySelectorAll('.child-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // タブとコンテンツを明示的に切り替え
+  const targetSection = child==='aoya'?'aoya-main':'eita-main';
+  const targetTab = child==='aoya'?'stab-aoya':'stab-eita';
+  document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.shared-tab').forEach(t=>t.classList.remove('active'));
+  const sec = document.getElementById(targetSection);
+  const tab = document.getElementById(targetTab);
+  if(sec) sec.classList.add('active');
+  if(tab) tab.classList.add('active');
+}
+function switchSharedTab(id,tabId){
+  document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.shared-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+function switchInner(child,tab,btn){
+  const page=document.getElementById(child+'-main');
+  page.querySelectorAll('.inner-section').forEach(s=>s.classList.remove('active'));
+  page.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(child+'-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+function tagClass(tag){return {grain:'tg',veg:'tv',protein:'tp',dairy:'td',fruit:'tf',other:'to'}[tag]||'to';}
+
+function getKanshokuColor(key, meals, suffix){
+  const kb=getKanshoku(key);
+  // 完食度が1件も記録されていなければ色なし
+  const avgs=meals.map(slot=>getSlotAvgRate(kb,slot)).filter(v=>v!==null);
+  if(avgs.length===0) return ''; // 未記録は色なし
+  // 全ての食事スロットに記録がある場合のみ色をつける
+  if(avgs.length<meals.length) return '';
+  const avg=avgs.reduce((a,b)=>a+b,0)/avgs.length;
+  if(avg>=100) return ' k-full-'+suffix;
+  if(avg>=75) return ' k-most-'+suffix;
+  if(avg>=50) return ' k-half-'+suffix;
+  return ' k-low-'+suffix;
+}
+function aRenderCal(){
+  document.getElementById('aoya-mlabel').textContent=`${aY}年${MONTHS[aMo]}`;
+  const body=document.getElementById('aoya-cal-body');body.innerHTML='';
+  const fd=new Date(aY,aMo,1).getDay(),dim=new Date(aY,aMo+1,0).getDate(),td=new Date();
+  for(let i=0;i<fd;i++) body.innerHTML+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const wi=Math.floor((fd+d-1)/7),di=(fd+d-1)%7;
+    const baseMenu=aMenu[wi%4][di];
+    const customKey='custom-aoya-'+aY+'-'+aMo+'-'+d;
+    const cm=getCustomMenu(customKey);
+    const m=cm||baseMenu;
+    const it=td.getFullYear()===aY&&td.getMonth()===aMo&&td.getDate()===d;
+    const kkey='aoya-'+aY+'-'+aMo+'-'+d;
+    // 献立がある日だけ完食度の色をつける
+    const hasMenuA = (m&&m.b&&m.b!==''&&m.b!=='（削除済み）');
+    const kcolor=hasMenuA ? getKanshokuColor(kkey,['b','l'],'b') : '';
+    const customTag=cm?'<div style="font-size:8px;color:#3C3489;text-align:right;">編集済</div>':'';
+    body.innerHTML+=`<div class="cal-day${it?' today-b':''}${aSel===d?' sel-b':''}${kcolor}" onclick="aSelDay(${d},${wi},${di})">
+      <div class="day-num">${d}</div>
+      ${(m&&m.b)?`<div class="day-meal dm-b1">${m.b}</div><div class="day-meal dm-b2">${m.l}</div>`:''}
+      ${customTag}
+      <div class="day-wtag">W${wi+1}</div></div>`;
+  }
+}
+function aoyaChgMonth(dir){aMo+=dir;if(aMo>11){aMo=0;aY++;}if(aMo<0){aMo=11;aY--;}aSel=null;resetDet('aoya');aRenderCal();wevalWeek.aoya=1;renderWevalBtns('aoya');}
+function aSelDay(d,wi,di){
+  aSel=d;aRenderCal();
+  const baseM=aMenu[wi%4][di],dt=new Date(aY,aMo,d);
+  const dateKey='aoya-'+aY+'-'+aMo+'-'+d;
+  const cm=getCustomMenu('custom-aoya-'+aY+'-'+aMo+'-'+d);
+  const m={b:(cm&&cm.b)||baseM.b, l:(cm&&cm.l)||baseM.l};
+  document.getElementById('aoya-det-date').textContent=`${MONTHS[aMo]}${d}日（${DOW[dt.getDay()]}）`;
+  const kb=getKanshoku(dateKey);
+  const makeMealRow=(slot,label,cssClass,irId)=>{
+    const menuName=m[slot];
+    if(!menuName||menuName==='（削除済み）'||menuName==='') return `<div class="meal-row"><span class="meal-label">${label}</span><span style="font-size:12px;color:#d3d1c7;">（未入力）</span></div>`;
+    return `<div class="meal-row"><span class="meal-label">${label}</span><span class="meal-chip ${cssClass}" onclick="showIR('${menuName}','${irId}','b')">${menuName} <span class="chip-hint">▼レシピ</span></span><button class="delete-meal-btn" onclick="deleteMeal('aoya',${d},${wi},${di},'${slot}')">削除</button></div><div class="inline-recipe" id="${irId}"></div>`;
+  };
+  document.getElementById('aoya-det-body').innerHTML=`
+    ${makeMealRow('b','朝食','mc-g1','aoya-ir-b')}
+    ${makeMealRow('l','昼食','mc-g2','aoya-ir-l')}
+    <div class="kanshoku-section">
+      <p class="kanshoku-title">完食度を記録する</p>
+      ${m.b&&m.b!=='（削除済み）'?buildDishKanshokuHTML(dateKey,'b',m.b,'aoya'):''}
+      ${m.l&&m.l!=='（削除済み）'?buildDishKanshokuHTML(dateKey,'l',m.l,'aoya'):''}
+      <div class="kanshoku-saved" id="ksaved-${dateKey}">保存しました</div>
+    </div>
+    <button class="add-menu-btn" onclick="openAddMenuModal('aoya',${d},${wi},${di})">+ この日の献立を変更・追加</button>
+    <p style="font-size:10px;color:#b4b2a9;margin-top:6px;">献立名をタップするとレシピが表示されます</p>`;
+}
+function aRenderTips(){
+  document.getElementById('aoya-tips-grid').innerHTML=aTips.map(t=>`<div class="tip-card"><div class="tip-lbl">[${t.lbl}]</div><div class="tip-title">${t.title}</div><div class="tip-body">${t.body}</div></div>`).join('');
+}
+
+function eRenderCal(){
+  document.getElementById('eita-mlabel').textContent=`${eY}年${MONTHS[eMo]}`;
+  const body=document.getElementById('eita-cal-body');body.innerHTML='';
+  const fd=new Date(eY,eMo,1).getDay(),dim=new Date(eY,eMo+1,0).getDate(),td=new Date();
+  for(let i=0;i<fd;i++) body.innerHTML+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const wi=Math.floor((fd+d-1)/7),di=(fd+d-1)%7;
+    const baseMenu=eMenu[wi%4][di];
+    const customKey='custom-eita-'+eY+'-'+eMo+'-'+d;
+    const cm=getCustomMenu(customKey);
+    const m=cm||baseMenu;
+    const it=td.getFullYear()===eY&&td.getMonth()===eMo&&td.getDate()===d;
+    const kkey='eita-'+eY+'-'+eMo+'-'+d;
+    // 献立がある日だけ完食度の色をつける
+    const hasMenuE = (m&&m.b&&m.b!==''&&m.b!=='（削除済み）');
+    const kcolor=hasMenuE ? getKanshokuColor(kkey,['b','l','d'],'g') : '';
+    const customTag=cm?'<div style="font-size:8px;color:#3C3489;text-align:right;">編集済</div>':'';
+    body.innerHTML+=`<div class="cal-day${it?' today-g':''}${eSel===d?' sel-g':''}${kcolor}" onclick="eSelDay(${d},${wi},${di})">
+      <div class="day-num">${d}</div>
+      ${m?`<div class="day-meal dm-g1">${m.b.split('・')[0]}</div><div class="day-meal dm-g2">${m.l.split('・')[0]}</div><div class="day-meal dm-g3">${(m.d||'').split('・')[0]}</div>`:''}
+      ${customTag}
+      <div class="day-wtag">W${wi+1}</div></div>`;
+  }
+}
+function eitaChgMonth(dir){eMo+=dir;if(eMo>11){eMo=0;eY++;}if(eMo<0){eMo=11;eY--;}eSel=null;resetDet('eita');eRenderCal();wevalWeek.eita=1;renderWevalBtns('eita');}
+function eSelDay(d,wi,di){
+  eSel=d;eRenderCal();
+  const baseM=eMenu[wi%4][di],dt=new Date(eY,eMo,d);
+  const dateKey='eita-'+eY+'-'+eMo+'-'+d;
+  const cm=getCustomMenu('custom-eita-'+eY+'-'+eMo+'-'+d);
+  const m={b:(cm&&cm.b)||baseM.b, l:(cm&&cm.l)||baseM.l, d:(cm&&cm.d)||baseM.d};
+  document.getElementById('eita-det-date').textContent=`${MONTHS[eMo]}${d}日（${DOW[dt.getDay()]}）`;
+  const kb=getKanshoku(dateKey);
+  const makeMealRow=(slot,label,cssClass,irId)=>{
+    const menuName=m[slot];
+    if(!menuName||menuName==='（削除済み）'||menuName==='') return `<div class="meal-row"><span class="meal-label">${label}</span><span style="font-size:12px;color:#d3d1c7;">（未入力）</span></div>`;
+    return `<div class="meal-row"><span class="meal-label">${label}</span><span class="meal-chip ${cssClass}" onclick="showIR('${menuName.split('・')[0]}','${irId}','g')">${menuName} <span class="chip-hint">▼</span></span><button class="delete-meal-btn" onclick="deleteMeal('eita',${d},${wi},${di},'${slot}')">削除</button></div><div class="inline-recipe" id="${irId}"></div>`;
+  };
+  document.getElementById('eita-det-body').innerHTML=`
+    ${makeMealRow('b','朝食','mc-b1','eita-ir-b')}
+    ${makeMealRow('l','昼食','mc-b2','eita-ir-l')}
+    ${makeMealRow('d','夕食','mc-b3','eita-ir-d')}
+    <div class="kanshoku-section">
+      <p class="kanshoku-title">完食度を記録する</p>
+      ${m.b&&m.b!=='（削除済み）'?buildDishKanshokuHTML(dateKey,'b',m.b,'eita'):''}
+      ${m.l&&m.l!=='（削除済み）'?buildDishKanshokuHTML(dateKey,'l',m.l,'eita'):''}
+      ${m.d&&m.d!=='（削除済み）'?buildDishKanshokuHTML(dateKey,'d',m.d,'eita'):''}
+      <div class="kanshoku-saved" id="ksaved-${dateKey}">保存しました</div>
+    </div>
+    <button class="add-menu-btn" onclick="openAddMenuModal('eita',${d},${wi},${di})">+ この日の献立を変更・追加</button>
+    <p style="font-size:10px;color:#b4b2a9;margin-top:6px;">献立名をタップするとレシピが表示されます</p>`;
+}
+function eRenderTips(){
+  document.getElementById('eita-tips-grid').innerHTML=eTips.map(t=>`<div class="tip-card"><div class="tip-lbl">[${t.lbl}]</div><div class="tip-title">${t.title}</div><div class="tip-body">${t.body}</div></div>`).join('');
+}
+
+
+
+
+function resetDet(child){
+  document.getElementById(child+'-det-date').textContent='日付をタップしてください';
+  document.getElementById(child+'-det-body').innerHTML='<p style="font-size:12px;color:#b4b2a9;">日付をタップすると献立が表示されます。</p>';
+}
+
+
+
+// ========== Gemini AI Arrange ==========
+const GEMINI_KEY = 'AIzaSyD9XBlIrz2w59NeWLpoZYhqYT2xDTqDCM4';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+];
+const GEMINI_URL = GEMINI_BASE + GEMINI_MODELS[0] + ':generateContent?key=' + GEMINI_KEY;
+
+
+
+
+
+
+
+
+
+// ========== Firebase Firestore 同期 ==========
+async function fsSet(collection, key, value){
+  try{
+    if(!window._db) return;
+    const docRef = window._fsDoc(window._db, collection, key);
+    await window._fsSetDoc(docRef, {value: value, updatedAt: Date.now()});
+  }catch(e){ console.warn('Firestore write error:', e); }
+}
+async function fsDel(collection, key){
+  try{
+    if(!window._db) return;
+    const {deleteDoc} = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
+    const docRef = window._fsDoc(window._db, collection, key);
+    await deleteDoc(docRef);
+  }catch(e){ console.warn('Firestore delete error:', e); }
+}
+
+// ========== 完食度 & 週次AI評価 ==========
+function getKanshoku(key){
+  try{ return JSON.parse(localStorage.getItem('k_'+key)||'{}'); }catch(e){ return {}; }
+}
+function saveKanshoku(key, meal, val, child){
+  try{
+    const data=getKanshoku(key);
+    data[meal]=val;
+    const sv_k=JSON.stringify(data);
+    localStorage.setItem('k_'+key, sv_k);
+    fsSet('kanshoku', key, sv_k); // Firestore同期
+    // ボタン色を更新
+    const color=child==='aoya'?'active-b':'active-g';
+    const mealLabels={b:'朝食',l:'昼食',d:'夕食'};
+    document.querySelectorAll(`[onclick*="'${key}','${meal}'"]`).forEach(btn=>{
+      btn.classList.remove('active-g','active-b');
+      if(btn.textContent===val) btn.classList.add(color);
+    });
+    const saved=document.getElementById('ksaved-'+key);
+    if(saved){saved.style.display='block';setTimeout(()=>saved.style.display='none',1500);}
+  }catch(e){}
+}
+
+
+// 料理別完食度ヘルパー
+function getDishRate(kb, slot, dishName){
+  // 新形式: kb[slot] = {dishName: '75%', ...}
+  // 旧形式: kb[slot] = '75%'（文字列）
+  const slotData = kb[slot];
+  if(!slotData) return null;
+  if(typeof slotData === 'string') return slotData; // 旧形式は全体値を返す
+  return slotData[dishName] || null;
+}
+function saveDishKanshoku(dateKey, slot, dishName, val, child){
+  try{
+    const data = getKanshoku(dateKey);
+    // slot を object形式に
+    if(typeof data[slot] === 'string') {
+      // 旧形式から移行：既存の値を全皿に適用
+      data[slot] = {};
+    }
+    if(!data[slot] || typeof data[slot] !== 'object') data[slot] = {};
+    data[slot][dishName] = val;
+    const sv=JSON.stringify(data); localStorage.setItem('k_'+dateKey, sv); fsSet('kanshoku', dateKey, sv);
+    // ボタン色更新
+    const color = child==='aoya'?'active-b':'active-g';
+    const escapedKey = dateKey.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const escapedSlot = slot;
+    const escapedDish = dishName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    document.querySelectorAll('.dish-kbtn[data-key="'+dateKey+'"][data-slot="'+slot+'"][data-dish="'+dishName+'"]').forEach(btn=>{
+      btn.classList.remove('active-g','active-b');
+      if(btn.dataset.val === val) btn.classList.add(color);
+    });
+    const saved = document.getElementById('ksaved-'+dateKey);
+    if(saved){saved.style.display='block';setTimeout(()=>saved.style.display='none',1500);}
+  }catch(e){ console.error(e); }
+}
+function getSlotAvgRate(kb, slot){
+  // slot の平均完食率を返す（旧形式・新形式両対応）
+  const slotData = kb[slot];
+  if(!slotData) return null;
+  if(typeof slotData === 'string') return parseInt(slotData);
+  const vals = Object.values(slotData).map(v=>parseInt(v)).filter(v=>!isNaN(v));
+  if(vals.length === 0) return null;
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+function getSlotRateStr(kb, slot){
+  const avg = getSlotAvgRate(kb, slot);
+  if(avg === null) return '-';
+  return avg+'%';
+}
+function buildDishKanshokuHTML(dateKey, slot, menuStr, child){
+  if(!menuStr || menuStr==='（削除済み）' || menuStr==='（未設定）') return '';
+  const dishes = menuStr.split('・').map(d=>d.trim()).filter(d=>d);
+  const kb = getKanshoku(dateKey);
+  const color = child==='aoya'?'active-b':'active-g';
+  if(dishes.length === 0) return '';
+  let html = '<div class="meal-slot-title">完食度を料理ごとに記録</div>';
+  dishes.forEach(dish => {
+    const cur = getDishRate(kb, slot, dish);
+    html += '<div class="dish-kanshoku-row">';
+    html += '<span class="dish-name-label">'+dish+'</span>';
+    html += '<div class="dish-kbtns">';
+    ['25%','50%','75%','100%'].forEach(v => {
+      const isActive = cur===v;
+      html += `<button class="dish-kbtn${isActive?' '+color:''}" data-key="${dateKey}" data-slot="${slot}" data-dish="${dish}" data-val="${v}" onclick="saveDishKanshoku('${dateKey}','${slot}','${dish}','${v}','${child}')">${v}</button>`;
+    });
+    html += '</div></div>';
+  });
+  return html;
+}
+
+let wevalWeek={aoya:1,eita:1};
+
+function renderWevalBtns(child){
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  // 実際の週数を計算
+  const lastWeek=Math.floor((firstDay+daysInMonth-1)/7)+1;
+  const bclass=child==='aoya'?'weval-btn-b':'weval-btn-g';
+  const container=document.getElementById(child+'-weval-btns');
+  container.innerHTML='';
+  for(let w=1;w<=lastWeek;w++){
+    const btn=document.createElement('button');
+    btn.className=bclass+(w===wevalWeek[child]?' active':'');
+    btn.textContent='第'+w+'週';
+    const ww=w;
+    btn.onclick=function(){selectWeekEval(child,ww,btn);};
+    container.appendChild(btn);
+  }
+  updateWevalSummary(child);
+}
+
+function selectWeekEval(child,week,btn){
+  wevalWeek[child]=week;
+  const bclass=child==='aoya'?'weval-btn-b':'weval-btn-g';
+  document.querySelectorAll(`#${child}-weval-btns .${bclass}`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateWevalSummary(child);
+}
+function updateWevalSummary(child){
+  const week=wevalWeek[child];
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const menus=child==='aoya'?aMenu:eMenu;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  let records=[];
+  for(let d=1;d<=daysInMonth;d++){
+    const wi=Math.floor((firstDay+d-1)/7);
+    if(wi+1!==week) continue;
+    const di=(firstDay+d-1)%7;
+    const m=menus[wi%4][di];
+    const key=child+'-'+year+'-'+month+'-'+d;
+    const kb=getKanshoku(key);
+    const dateStr=`${d}日`;
+    if(child==='aoya'){
+      records.push({date:dateStr,b:m.b,bk:getSlotRateStr(kb,'b'),l:m.l,lk:getSlotRateStr(kb,'l')});
+    } else {
+      records.push({date:dateStr,b:m.b,bk:getSlotRateStr(kb,'b'),l:m.l,lk:getSlotRateStr(kb,'l'),d:m.d,dk:getSlotRateStr(kb,'d')});
+    }
+  }
+  const el=document.getElementById(child+'-weval-summary');
+  if(records.length===0){el.textContent='この週のデータがありません';return;}
+  const filled=records.filter(r=>r.bk!=='-'||r.lk!=='-'||(r.dk&&r.dk!=='-')).length;
+  let html=`第${week}週（${records[0].date}〜${records[records.length-1].date}）
+記録済み: ${filled}/${records.length}日
+
+`;
+  records.forEach(r=>{
+    if(child==='aoya'){
+      html+=`${r.date}: 朝${r.bk} 昼${r.lk}
+`;
+    } else {
+      html+=`${r.date}: 朝${r.bk} 昼${r.lk} 夕${r.dk}
+`;
+    }
+  });
+  el.textContent=html;
+  return records;
+}
+
+async function runWeeklyEval(child){
+  const week=wevalWeek[child];
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const menus=child==='aoya'?aMenu:eMenu;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  let records=[];
+  for(let d=1;d<=daysInMonth;d++){
+    const wi=Math.floor((firstDay+d-1)/7);
+    if(wi+1!==week) continue;
+    const di=(firstDay+d-1)%7;
+    const m=menus[wi%4][di];
+    const key=child+'-'+year+'-'+month+'-'+d;
+    const kb=getKanshoku(key);
+    if(child==='aoya'){
+      records.push(`${d}日: 朝「${m.b}」完食度${getSlotRateStr(kb,'b')} / 昼「${m.l}」完食度${getSlotRateStr(kb,'l')}`);
+    } else {
+      records.push(`${d}日: 朝「${m.b}」${getSlotRateStr(kb,'b')} / 昼「${m.l}」${getSlotRateStr(kb,'l')} / 夕「${m.d}」${getSlotRateStr(kb,'d')}`);
+    }
+  }
+  const resultEl=document.getElementById(child+'-weval-result');
+  const btn=document.getElementById(child+'-weval-btn');
+  btn.disabled=true;
+  resultEl.className='weval-result show';
+  resultEl.innerHTML='<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:6px;">Geminiが分析中...</span></div>';
+  const ageCtx=child==='aoya'
+    ?'生後6か月の赤ちゃん（碧也）、離乳食初期（ゴックン期）'
+    :'2歳10か月の男の子（瑛太）、幼児食期';
+  const prompt=`${ageCtx}の1週間の食事記録と完食度です。
+
+${records.join('\n')}
+
+以下の観点で評価と提案をお願いします：
+1. 今週の栄養バランス評価（よく食べたもの・食べなかったもの）
+2. 完食度が低かった料理の原因と対策
+3. 来週の献立改善提案（具体的なメニュー変更を含む）
+
+日本語で、親が実践しやすいよう具体的にアドバイスしてください。`;
+  try{
+    const res=await fetch(GEMINI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:1500,temperature:0.7}
+      })
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      resultEl.textContent='エラー('+res.status+'): '+(err.error?err.error.message:res.statusText);
+    } else {
+      const data=await res.json();
+      if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
+        const raw=data.candidates[0].content.parts[0].text;
+        window['_lastEvalText_'+child]=raw;
+        resultEl.innerHTML=raw.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/###([^\n]+)/g,'<b style="font-size:13px;">$1</b>').replace(/\n/g,'<br>');
+        resultEl.scrollIntoView({behavior:'smooth',block:'start'});
+        // 改善ボックスを表示・次週セレクト更新
+        const improveBox=document.getElementById(child+'-improve-box');
+        improveBox.classList.add('show');
+        updateImproveWeekSel(child);
+        document.getElementById(child+'-improve-preview').className='improve-preview-box';
+        document.getElementById(child+'-improve-confirm').style.display='none';
+      } else {
+        resultEl.textContent='回答を取得できませんでした。';
+      }
+    }
+  }catch(e){
+    resultEl.textContent='ネットワークエラー: '+e.message;
+  }
+  btn.disabled=false;
+}
+
+
+
+// ========== 次週献立組み替え機能 ==========
+// 改善提案に基づく献立データを一時保存
+window._pendingMenus = {};
+
+function updateImproveWeekSel(child){
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const curWeek=wevalWeek[child];
+  const fd=new Date(year,month,1).getDay();
+  const dim=new Date(year,month+1,0).getDate();
+  const totalWeeks=Math.floor((fd+dim-1)/7)+1;
+  const sel=document.getElementById(child+'-improve-week-sel');
+  sel.innerHTML='';
+  // 次週以降を選択肢に
+  for(let w=curWeek+1;w<=totalWeeks;w++){
+    const opt=document.createElement('option');
+    opt.value=w;
+    opt.textContent='第'+w+'週';
+    sel.appendChild(opt);
+  }
+  // 来月の週も追加
+  let nextMonth=month+1, nextYear=year;
+  if(nextMonth>11){nextMonth=0;nextYear++;}
+  const fd2=new Date(nextYear,nextMonth,1).getDay();
+  const dim2=new Date(nextYear,nextMonth+1,0).getDate();
+  const totalWeeks2=Math.floor((fd2+dim2-1)/7)+1;
+  for(let w=1;w<=Math.min(totalWeeks2,4);w++){
+    const opt=document.createElement('option');
+    opt.value='next-'+w;
+    opt.textContent=(nextMonth+1)+'月 第'+w+'週';
+    sel.appendChild(opt);
+  }
+  if(sel.options.length===0){
+    const opt=document.createElement('option');
+    opt.value='next-1';
+    opt.textContent=(nextMonth+1)+'月 第1週';
+    sel.appendChild(opt);
+  }
+}
+
+function showImprovePreview(child, menus){
+  const preview = document.getElementById(child+'-improve-preview');
+  let html = '<strong>生成された7日分の改善献立：</strong><br><br>';
+  menus.forEach((m, i) => {
+    html += `<div style="padding:6px 0;border-bottom:1px solid #e0ddd6;"><strong>${i+1}日目</strong><br>`;
+    html += `朝：${m.b || '未定'}<br>昼：${m.l || '未定'}`;
+    if(m.d) html += `<br>夕：${m.d}`;
+    html += '</div>';
+  });
+  preview.className = 'improve-preview-box show';
+  preview.innerHTML = html;
+}
+
+async function generateImprovedMenu(child){
+  const evalText=window['_lastEvalText_'+child]||'';
+  if(!evalText){alert('先にAI評価を実行してください');return;}
+  const genBtn=document.getElementById(child+'-improve-gen-btn');
+  const preview=document.getElementById(child+'-improve-preview');
+  const confirm=document.getElementById(child+'-improve-confirm');
+  genBtn.disabled=true;
+  preview.className='improve-preview-box show';
+  preview.innerHTML='<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:8px;">7日分の改善献立を生成中...</span></div>';
+  confirm.style.display='none';
+  const ageCtx=child==='aoya'
+    ?'生後6か月の赤ちゃん（碧也）、離乳食初期。各食事はペースト状で塩分不使用。1日2食（朝・昼）'
+    :'2歳10か月の男の子（瑛太）、幼児食期。薄味。1日3食（朝・昼・夕）';
+  const mealFormat=child==='aoya'
+    ?'朝食と昼食の2食分'
+    :'朝食・昼食・夕食の3食分';
+  const prompt=`以下はAIによる先週の食事評価と改善提案です：
+
+${evalText}
+
+上記の改善提案を踏まえて、次の1週間（7日分）の具体的な献立を提案してください。
+
+対象：${ageCtx}
+形式：各日について${mealFormat}を以下のJSON形式で出力してください。
+
+必ず以下のJSON形式のみで回答してください。マークダウンのコードブロック（\`\`\`）は使わず、JSONの配列だけを出力してください。説明文も不要です：
+[
+  {"day":1,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":2,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":3,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":4,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":5,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":6,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
+  {"day":7,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}}
+]`;
+  try{
+    const res=await fetch(GEMINI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:1500,temperature:0.6}
+      })
+    });
+    if(!res.ok){
+      preview.textContent='エラーが発生しました。再試行してください。';
+      genBtn.disabled=false;return;
+    }
+    const data=await res.json();
+    if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
+      const raw=data.candidates[0].content.parts[0].text;
+      // JSON抽出（```json ... ``` のマークダウン記法も対応）
+      let jsonStr = raw;
+      // マークダウンコードブロックを除去
+      jsonStr = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const jsonMatch = jsonStr.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+      if(!jsonMatch){
+        // 改行をまたぐパターンで再試行
+        const jsonMatch2 = raw.replace(/```json/gi,'').replace(/```/g,'').match(/\[[\s\S]*\]/);
+        if(!jsonMatch2){
+          preview.innerHTML='献立データの解析に失敗しました。再度お試しください。<br><small style="color:#888780;">'+raw.substring(0,300)+'</small>';
+          genBtn.disabled=false;return;
+        }
+        try{
+          const menus2=JSON.parse(jsonMatch2[0]);
+          window._pendingMenus[child]=menus2;
+          showImprovePreview(child, menus2);
+          confirm.style.display='flex';
+          genBtn.disabled=false;return;
+        }catch(e2){
+          preview.innerHTML='献立データの解析に失敗しました。再度お試しください。';
+          genBtn.disabled=false;return;
+        }
+      }
+      const menus=JSON.parse(jsonMatch[0]);
+      window._pendingMenus[child]=menus;
+      showImprovePreview(child, menus);
+      confirm.style.display='flex';
+    } else {
+      preview.textContent='回答を取得できませんでした。';
+    }
+  }catch(e){
+    preview.textContent='エラー: '+e.message;
+  }
+  genBtn.disabled=false;
+}
+
+function applyImprovedMenu(child){
+  const menus=window._pendingMenus[child];
+  if(!menus||menus.length===0){alert('献立データがありません');return;}
+  const sel=document.getElementById(child+'-improve-week-sel');
+  const selVal=sel.value;
+  let targetYear,targetMonth,targetWeek;
+  if(selVal.startsWith('next-')){
+    targetWeek=parseInt(selVal.replace('next-',''));
+    targetMonth=(child==='aoya'?aMo:eMo)+1;
+    targetYear=child==='aoya'?aY:eY;
+    if(targetMonth>11){targetMonth=0;targetYear++;}
+  } else {
+    targetWeek=parseInt(selVal);
+    targetYear=child==='aoya'?aY:eY;
+    targetMonth=child==='aoya'?aMo:eMo;
+  }
+  // 対象週の日付を特定してカスタム献立として保存
+  const fd=new Date(targetYear,targetMonth,1).getDay();
+  const dim=new Date(targetYear,targetMonth+1,0).getDate();
+  let dayCount=0;
+  for(let d=1;d<=dim;d++){
+    const wi=Math.floor((fd+d-1)/7);
+    if(wi+1!==targetWeek) continue;
+    if(dayCount>=menus.length) break;
+    const menuItem=menus[dayCount];
+    const key='custom-'+child+'-'+targetYear+'-'+targetMonth+'-'+d;
+    const data={b:menuItem.b||'',l:menuItem.l||''};
+    if(menuItem.d) data.d=menuItem.d;
+    try{const sv=JSON.stringify(data);localStorage.setItem(key,sv);fsSet('menus',key,sv);}catch(e){}
+    dayCount++;
+  }
+  // カレンダー再描画
+  if(child==='aoya') aRenderCal();
+  else eRenderCal();
+  // 確認UI更新
+  document.getElementById(child+'-improve-confirm').style.display='none';
+  document.getElementById(child+'-improve-preview').innerHTML+='<div style="margin-top:8px;padding:8px;background:#E1F5EE;border-radius:6px;color:#085041;font-weight:600;font-size:12px;">第'+targetWeek+'週のカレンダーに反映しました！カレンダーで確認してください。</div>';
+  delete window._pendingMenus[child];
+}
+
+function cancelImprovedMenu(child){
+  delete window._pendingMenus[child];
+  document.getElementById(child+'-improve-preview').className='improve-preview-box';
+  document.getElementById(child+'-improve-confirm').style.display='none';
+}
+
+// ========== カスタム献立管理 ==========
+function getCustomMenu(key){
+  try{ const v=localStorage.getItem(key); return v?JSON.parse(v):null; }catch(e){ return null; }
+}
+function getModalDishes(slot){
+  const container = document.getElementById('modal-dishes-'+slot);
+  if(!container) return '';
+  const inputs = container.querySelectorAll('input');
+  const vals = Array.from(inputs).map(i=>i.value.trim()).filter(v=>v);
+  return vals.join('・');
+}
+function addModalDish(slot, value=''){
+  const container = document.getElementById('modal-dishes-'+slot);
+  if(!container) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = value;
+  input.placeholder = '料理名を入力';
+  input.style.cssText = 'flex:1;padding:7px 10px;border:1px solid #d3d1c7;border-radius:8px;font-size:13px;font-family:inherit;';
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '×';
+  delBtn.style.cssText = 'padding:6px 10px;border:1px solid #F7C1C1;border-radius:8px;background:#FCEBEB;color:#791F1F;cursor:pointer;font-size:12px;flex-shrink:0;font-family:inherit;';
+  delBtn.onclick = ()=>{ row.remove(); };
+  row.appendChild(input);
+  row.appendChild(delBtn);
+  container.appendChild(row);
+  input.focus();
+}
+function initModalDishes(slot, valueStr){
+  const container = document.getElementById('modal-dishes-'+slot);
+  if(!container) return;
+  container.innerHTML = '';
+  if(valueStr && valueStr !== '（削除済み）' && valueStr !== '（未設定）'){
+    valueStr.split('・').forEach(v=>{ if(v.trim()) addModalDish(slot, v.trim()); });
+  }
+  if(container.children.length === 0) addModalDish(slot);
+}
+function saveCustomMenu(){
+  const b = getModalDishes('b');
+  const l = getModalDishes('l');
+  const d = getModalDishes('d');
+  if(!b && !l && !d) return; // 全て空の場合のみキャンセル
+  const data = {b: b||'（未設定）', l: l||'（未設定）'};
+  if(document.getElementById('modal-d-row').style.display!=='none') data.d = d||'（未設定）';
+  try{ const sv=JSON.stringify(data); localStorage.setItem(window._modalKey, sv); fsSet('menus', window._modalKey, sv); }catch(e){}
+  document.getElementById('add-menu-modal').style.display='none';
+  if(window._modalChild==='aoya') aRenderCal();
+  else eRenderCal();
+  if(window._modalChild==='aoya') aSelDay(window._modalD,window._modalWi,window._modalDi);
+  else eSelDay(window._modalD,window._modalWi,window._modalDi);
+}
+function deleteCustomMenu(){
+  try{ localStorage.removeItem(window._modalKey); fsDel('menus', window._modalKey); }catch(e){}
+  document.getElementById('add-menu-modal').style.display='none';
+  if(window._modalChild==='aoya') aRenderCal();
+  else eRenderCal();
+  if(window._modalChild==='aoya') aSelDay(window._modalD,window._modalWi,window._modalDi);
+  else eSelDay(window._modalD,window._modalWi,window._modalDi);
+}
+function openAddMenuModal(child,d,wi,di){
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const key='custom-'+child+'-'+year+'-'+month+'-'+d;
+  window._modalKey=key;
+  window._modalChild=child;
+  window._modalD=d;
+  window._modalWi=wi;
+  window._modalDi=di;
+  const baseMenu=child==='aoya'?aMenu[wi%4][di]:eMenu[wi%4][di];
+  const cm=getCustomMenu(key)||baseMenu;
+  document.getElementById('modal-title').textContent=(child==='aoya'?'碧也':'瑛太')+' '+(month+1)+'月'+d+'日の献立';
+  // 料理ごとの入力欄を初期化
+  initModalDishes('b', cm?cm.b:'');
+  initModalDishes('l', cm?cm.l:'');
+  const dRow=document.getElementById('modal-d-row');
+  if(child==='eita'){
+    dRow.style.display='block';
+    initModalDishes('d', cm?cm.d||'':'');
+  } else {
+    dRow.style.display='none';
+  }
+  const saveBtn=document.getElementById('modal-save-btn');
+  saveBtn.style.background=child==='aoya'?'#185FA5':'#1D9E75';
+  document.getElementById('add-menu-modal').style.display='flex';
+}
+function closeAddMenuModal(e){
+  if(e.target.id==='add-menu-modal') document.getElementById('add-menu-modal').style.display='none';
+}
+
+
+
+// ========== カレンダー転記機能 ==========
+function initTranscribeSelects(){
+  const today = new Date();
+  const yearSel = document.getElementById('transcribe-year');
+  const monthSel = document.getElementById('transcribe-month');
+  // 年：前年〜来年
+  for(let y = today.getFullYear()-1; y <= today.getFullYear()+1; y++){
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y + '年';
+    if(y === today.getFullYear()) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  // 月
+  for(let m = 0; m < 12; m++){
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = (m+1) + '月';
+    if(m === today.getMonth()) opt.selected = true;
+    monthSel.appendChild(opt);
+  }
+  updateTranscribeDays();
+}
+
+function updateTranscribeDays(){
+  const y = parseInt(document.getElementById('transcribe-year').value);
+  const m = parseInt(document.getElementById('transcribe-month').value);
+  const daySel = document.getElementById('transcribe-day');
+  const today = new Date();
+  const dim = new Date(y, m+1, 0).getDate();
+  const currentDay = daySel.value ? parseInt(daySel.value) : today.getDate();
+  daySel.innerHTML = '';
+  for(let d = 1; d <= dim; d++){
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d + '日';
+    if(d === Math.min(currentDay, dim)) opt.selected = true;
+    daySel.appendChild(opt);
+  }
+}
+
+function buildSlotText(menuStr, kb, slot, slotLabel){
+  // menuStr = "ご飯・味噌汁・卵焼き" などの文字列
+  // kb[slot] は {ご飯:'75%', 味噌汁:'100%'} または '75%'（旧形式） または undefined
+  if(!menuStr || menuStr==='（削除済み）') return slotLabel + '：（なし）\n';
+  const dishes = menuStr.split('・').map(d=>d.trim()).filter(d=>d);
+  const slotData = kb[slot];
+  let text = slotLabel + '：\n';
+  dishes.forEach(dish => {
+    let rate = '未記録';
+    if(slotData){
+      if(typeof slotData === 'string'){
+        // 旧形式：スロット全体に1つの完食度
+        rate = slotData;
+      } else if(typeof slotData === 'object'){
+        rate = slotData[dish] || '未記録';
+      }
+    }
+    text += '  ・' + dish + '：完食度 ' + rate + '\n';
+  });
+  return text;
+}
+
+function doTranscribe(){
+  const y = parseInt(document.getElementById('transcribe-year').value);
+  const m = parseInt(document.getElementById('transcribe-month').value);
+  const d = parseInt(document.getElementById('transcribe-day').value);
+  const child = dailyChild;
+  const menus = child === 'aoya' ? aMenu : eMenu;
+  const fd = new Date(y, m, 1).getDay();
+  const wi = Math.floor((fd+d-1)/7);
+  const di = (fd+d-1) % 7;
+  const baseMenu = menus[wi%4][di];
+  const customKey = 'custom-' + child + '-' + y + '-' + m + '-' + d;
+  const cm = getCustomMenu(customKey);
+  const menu = {
+    b: (cm&&cm.b) || baseMenu.b || '',
+    l: (cm&&cm.l) || baseMenu.l || '',
+    d: (cm&&cm.d) || baseMenu.d || ''
+  };
+  const kkey = child + '-' + y + '-' + m + '-' + d;
+  const kb = getKanshoku(kkey);
+  const DOW2 = ['日','月','火','水','木','金','土'];
+  const dow = DOW2[new Date(y, m, d).getDay()];
+  const childName = child === 'aoya' ? '碧也' : '瑛太';
+  let text = childName + ' / ' + (m+1) + '月' + d + '日（' + dow + '）の食事記録\n';
+  text += '================================\n';
+  text += buildSlotText(menu.b, kb, 'b', '朝食');
+  text += buildSlotText(menu.l, kb, 'l', '昼食');
+  if(child === 'eita') text += buildSlotText(menu.d, kb, 'd', '夕食');
+  text += '================================\n';
+  text += 'メモ：（体調・機嫌・環境など追記してください）';
+  document.getElementById('daily-meals-input').value = text;
+  const ta = document.getElementById('daily-meals-input');
+  ta.focus();
+  ta.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ========== AIアシスタント機能 ==========
+let dailyChild='eita', trendChild='eita', menuChild='eita', shopChild='eita';
+let dislikeList=[], fridgeList=[];
+
+function toggleDailyChild(c){
+  dailyChild=c;
+  document.getElementById('daily-child-aoya').className='ai-sel-chip'+(c==='aoya'?' on':'');
+  document.getElementById('daily-child-eita').className='ai-sel-chip'+(c==='eita'?' on':'');
+}
+function toggleTrendChild(c){
+  trendChild=c;
+  document.getElementById('trend-child-aoya').className='ai-sel-chip'+(c==='aoya'?' on':'');
+  document.getElementById('trend-child-eita').className='ai-sel-chip'+(c==='eita'?' on':'');
+}
+function toggleMenuChild(c){
+  menuChild=c;
+  document.getElementById('menu-child-aoya').className='ai-sel-chip'+(c==='aoya'?' on':'');
+  document.getElementById('menu-child-eita').className='ai-sel-chip'+(c==='eita'?' on':'');
+}
+function toggleShopChild(c){
+  shopChild=c;
+  document.getElementById('shop-child-aoya').className='ai-sel-chip'+(c==='aoya'?' on':'');
+  document.getElementById('shop-child-eita').className='ai-sel-chip'+(c==='eita'?' on':'');
+}
+function toggleDislike(btn,name){
+  const i=dislikeList.indexOf(name);
+  if(i===-1){dislikeList.push(name);btn.classList.add('on');}
+  else{dislikeList.splice(i,1);btn.classList.remove('on');}
+}
+function addDislikeChip(){
+  const v=document.getElementById('dislike-custom').value.trim();
+  if(!v)return;
+  if(!dislikeList.includes(v)){
+    dislikeList.push(v);
+    const btn=document.createElement('button');
+    btn.className='ai-sel-chip on';
+    btn.textContent=v;
+    btn.onclick=function(){toggleDislike(btn,v);};
+    document.getElementById('dislike-chips').appendChild(btn);
+  }
+  document.getElementById('dislike-custom').value='';
+}
+function toggleFridge(btn,name){
+  const i=fridgeList.indexOf(name);
+  if(i===-1){fridgeList.push(name);btn.classList.add('on');}
+  else{fridgeList.splice(i,1);btn.classList.remove('on');}
+}
+function addFridgeChip(){
+  const v=document.getElementById('fridge-custom').value.trim();
+  if(!v)return;
+  if(!fridgeList.includes(v)){
+    fridgeList.push(v);
+    const btn=document.createElement('button');
+    btn.className='ai-sel-chip on';
+    btn.textContent=v;
+    btn.onclick=function(){toggleFridge(btn,v);};
+    document.getElementById('fridge-chips').appendChild(btn);
+  }
+  document.getElementById('fridge-custom').value='';
+}
+
+function renderAIOutput(el, text, finishReason){
+  // 途切れ検知
+  if(finishReason && finishReason !== 'STOP'){
+    text += '\n\n（回答が途中で終了しました。再度お試しください）';
+  }
+  el.style.maxHeight='';
+  el.style.overflow='visible';
+  el.innerHTML=text
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/###([^\n]+)/g,'<b style="font-size:13px;display:block;margin-top:10px;margin-bottom:4px;color:#2c2c2a;">$1</b>')
+    .replace(/##([^\n]+)/g,'<b style="font-size:13px;display:block;margin-top:10px;margin-bottom:4px;color:#2c2c2a;">$1</b>')
+    .replace(/^#([^\n]+)/gm,'<b style="font-size:14px;display:block;margin-top:10px;margin-bottom:4px;color:#2c2c2a;">$1</b>')
+    .replace(/^\* (.+)/gm,'<span style="display:block;padding-left:12px;margin:2px 0;">・$1</span>')
+    .replace(/^- (.+)/gm,'<span style="display:block;padding-left:12px;margin:2px 0;">・$1</span>')
+    .replace(/^(\d+)\. (.+)/gm,'<span style="display:block;padding-left:12px;margin:2px 0;"><strong>$1.</strong> $2</span>')
+    .replace(/\n\n/g,'<div style="height:6px;"></div>')
+    .replace(/\n/g,'<br>');
+  el.className='ai-output show';
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+async function callGeminiWithModel(prompt, modelName){
+  const url = GEMINI_BASE + modelName + ':generateContent?key=' + GEMINI_KEY;
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{role:'user',parts:[{text:prompt}]}],
+      generationConfig:{maxOutputTokens:1500,temperature:0.7}
+    })
+  });
+  return res;
+}
+
+async function callGemini(prompt, outputId, btnId){
+  const el=document.getElementById(outputId);
+  const btn=document.getElementById(btnId);
+  btn.disabled=true;
+  el.style.maxHeight=''; el.style.overflow='visible';
+  el.className='ai-output show';
+
+  for(let mi=0; mi<GEMINI_MODELS.length; mi++){
+    const model=GEMINI_MODELS[mi];
+    const modelLabel=mi===0?'':' ('+model+'に切り替え)';
+    // 各モデルで最大2回試みる
+    for(let attempt=1; attempt<=2; attempt++){
+      el.innerHTML='<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div>'
+        +'<span style="margin-left:8px;">分析中'+modelLabel+(attempt>1?' 再試行中...':'...')+'</span></div>';
+      try{
+        const res = await callGeminiWithModel(prompt, model);
+        if(res.status===503||res.status===429){
+          const waitSec = attempt*4;
+          if(attempt<2){
+            el.innerHTML='<div style="font-size:12px;color:#888780;padding:8px;">混雑中... '+waitSec+'秒後に再試行します</div>';
+            await new Promise(r=>setTimeout(r, waitSec*1000));
+            continue;
+          } else {
+            // このモデルは混雑 → 次のモデルへ
+            if(mi<GEMINI_MODELS.length-1){
+              el.innerHTML='<div style="font-size:12px;color:#888780;padding:8px;">'+model+'が混雑中。別のモデルで再試行します...</div>';
+              await new Promise(r=>setTimeout(r, 2000));
+            }
+            break; // 次のモデルへ
+          }
+        }
+        if(res.status===404||res.status===400){
+          // このモデルは使えない → 次へ
+          break;
+        }
+        if(!res.ok){
+          const err=await res.json().catch(()=>({}));
+          el.innerHTML='エラー('+res.status+'): '+(err.error?err.error.message:res.statusText);
+          btn.disabled=false;
+          return;
+        }
+        const data=await res.json();
+        if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
+          const usedModel = mi>0?'<div style="font-size:10px;color:#888780;text-align:right;margin-top:4px;">使用モデル: '+model+'</div>':'';
+          const finReason=data.candidates[0].finishReason||'STOP';
+        renderAIOutput(el, data.candidates[0].content.parts[0].text, finReason);
+          el.innerHTML += usedModel;
+          btn.disabled=false;
+          return; // 成功
+        } else {
+          el.innerHTML='回答を取得できませんでした。もう一度お試しください。';
+          btn.disabled=false;
+          return;
+        }
+      }catch(e){
+        if(attempt<2){ await new Promise(r=>setTimeout(r,2000)); continue; }
+        break;
+      }
+    }
+  }
+  // 全モデル失敗
+  el.innerHTML='<div style="padding:8px;">Geminiが現在混雑しています。<br>数分後に再度お試しください。</div>';
+  btn.disabled=false;
+}
+
+
+// 月次の料理別完食度データを構造化して返す
+function collectMonthlyDishData(child, year, month){
+  const menus = child==='aoya' ? aMenu : eMenu;
+  const fd = new Date(year,month,1).getDay();
+  const dim = new Date(year,month+1,0).getDate();
+  const highDishes=[], lowDishes=[], allRecords=[];
+  for(let d=1;d<=dim;d++){
+    const wi=Math.floor((fd+d-1)/7), di=(fd+d-1)%7;
+    const baseM=menus[wi%4][di];
+    const cm=getCustomMenu('custom-'+child+'-'+year+'-'+month+'-'+d);
+    const m={b:(cm&&cm.b)||baseM.b, l:(cm&&cm.l)||baseM.l, d:(cm&&cm.d)||(baseM.d||'')};
+    const kb=getKanshoku(child+'-'+year+'-'+month+'-'+d);
+    const slots=child==='aoya'?[['b','朝'],['l','昼']]:[['b','朝'],['l','昼'],['d','夕']];
+    let dayHas=false;
+    let dayText=d+'日: ';
+    const dayParts=[];
+    slots.forEach(([slot,label])=>{
+      const menuStr=m[slot]||'';
+      if(!menuStr||menuStr==='（削除済み）') return;
+      const slotData=kb[slot];
+      if(!slotData) return;
+      const dishes=menuStr.split('・').map(s=>s.trim()).filter(s=>s);
+      dishes.forEach(dish=>{
+        let rate=null;
+        if(typeof slotData==='string') rate=parseInt(slotData);
+        else if(typeof slotData==='object') rate=slotData[dish]?parseInt(slotData[dish]):null;
+        if(rate===null) return;
+        dayHas=true;
+        dayParts.push(label+'「'+dish+'」'+rate+'%');
+        if(rate>=75) highDishes.push(dish+'('+rate+'%)');
+        else if(rate<=50) lowDishes.push(dish+'('+rate+'%)');
+      });
+    });
+    if(dayHas) allRecords.push(dayText+dayParts.join(' / '));
+  }
+  return {
+    highDishes:[...new Set(highDishes)].slice(0,12),
+    lowDishes:[...new Set(lowDishes)].slice(0,12),
+    allRecords
+  };
+}
+
+// 機能1: 日次要約
+async function runDailySummary(){
+  const meals=document.getElementById('daily-meals-input').value.trim();
+  if(!meals){alert('食事内容を入力してください');return;}
+  const child=dailyChild;
+  const name=child==='aoya'?'碧也（月齢6か月・離乳食初期）':'瑛太（2歳10か月・幼児食）';
+  const ageCtx=child==='aoya'
+    ?'生後6か月の赤ちゃん（碧也）、離乳食初期（ゴックン期）。主食は母乳・ミルクで離乳食は補完食。'
+    :'2歳10か月の男の子（瑛太）、幼児食期。薄味・小さめ・柔らかめが基本。';
+  const prompt=`${name}（${ageCtx}）の今日の食事記録と料理ごとの完食度です。
+
+${meals}
+
+以下の観点で分析と提案をしてください（各項目2〜3文で簡潔に）：
+1. 今日の摂取傾向（よく食べた料理・食べなかった料理）
+2. 好き嫌いや食欲の傾向
+3. 栄養バランス評価と不足栄養素
+4. 明日の献立への提案（1〜2案）
+
+全体を500字以内・箇条書きでまとめてください。`;
+  await callGemini(prompt,'daily-ai-output','daily-run-btn');
+}
+
+// 機能2: 傾向分析（料理別完食度対応）
+async function runTrendAnalysis(){
+  const child=trendChild;
+  const name=child==='aoya'?'碧也（月齢6か月・離乳食初期）':'瑛太（2歳10か月・幼児食）';
+  const dislikes=dislikeList.length>0?dislikeList.join('、'):'特になし';
+  const memo=document.getElementById('trend-memo').value.trim();
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const {highDishes,lowDishes,allRecords}=collectMonthlyDishData(child,year,month);
+  const recordStr=allRecords.length>0?allRecords.join('\n'):'（完食度データなし。カレンダーで料理ごとの完食度を記録してください）';
+  const highStr=highDishes.length>0?highDishes.join('、'):'記録なし';
+  const lowStr=lowDishes.length>0?lowDishes.join('、'):'記録なし';
+  const prompt=`${name}の今月の食事傾向を分析してください。
+
+【料理ごとの完食度記録（今月分）】
+${recordStr}
+
+【集計結果】
+よく食べた料理（75%以上）: ${highStr}
+食べなかった料理（50%以下）: ${lowStr}
+
+【親が感じる苦手食材】
+${dislikes}
+
+【気になること・相談】
+${memo||'なし'}
+
+以下の観点で分析・提案してください（各項目2文で簡潔に）：
+1. よく食べた料理の共通点（味・食感・調理法）
+2. 食べなかった料理の傾向と克服の工夫
+3. 苦手食材の調理アレンジ提案（1〜2案）
+4. 献立改善の優先アドバイス（上位2点）
+
+全体を500字以内・箇条書きでまとめてください。`;
+  await callGemini(prompt,'trend-ai-output','trend-run-btn');
+}
+
+// 機能3: 献立提案（料理別完食度データ活用）
+async function runMenuProposal(){
+  const child=menuChild;
+  const name=child==='aoya'?'碧也（月齢6か月・離乳食初期）':'瑛太（2歳10か月・幼児食）';
+  const fridge=fridgeList.length>0?fridgeList.join('、'):'（指定なし）';
+  const cookTime=document.getElementById('cook-time').value;
+  const recentUsed=document.getElementById('recent-used').value.trim()||'特になし';
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const {highDishes,lowDishes}=collectMonthlyDishData(child,year,month);
+  const highStr=highDishes.length>0?highDishes.slice(0,10).join('、'):'記録なし';
+  const lowStr=lowDishes.length>0?lowDishes.slice(0,10).join('、'):'記録なし';
+  const ageCtx=child==='aoya'
+    ?'生後6か月の赤ちゃん。ペースト状・塩分不使用・1日2食。'
+    :'2歳10か月の男の子。薄味・小さめ・柔らかめ・1日3食。';
+  const prompt=`${name}（${ageCtx}）向けの来週の献立を3案提案してください。
+
+【今月の料理ごとの完食度から見えた傾向】
+よく食べた料理（75%以上）: ${highStr}
+あまり食べなかった料理（50%以下）: ${lowStr}
+
+【冷蔵庫にある食材】
+${fridge}
+
+【調理時間の目安】
+${cookTime}
+
+【直近3日に使った食材（なるべく避けたい）】
+${recentUsed}
+
+以下を考慮して献立を2案提案してください（各案は3行以内で簡潔に）：
+1. よく食べた料理の調理法・食材を活かす
+2. 食べなかった食材を工夫して再挑戦
+3. 不足栄養素を補う
+4. 冷蔵庫の食材を優先使用
+
+【形式】案1: 献立名 / 食材 / 工夫ポイント（1文）
+全体を500字以内・箇条書きでまとめてください。`;
+  await callGemini(prompt,'menu-ai-output','menu-run-btn');
+}
+
+// 機能4: 2人分まとめ買いリスト（カレンダーデータ自動集計）
+async function runShoppingList(){
+  const memoA=document.getElementById('shopping-memo-aoya').value.trim();
+  const memoE=document.getElementById('shopping-memo-eita').value.trim();
+  // 碧也の今月完食度データ自動収集
+  const {highDishes:aHigh,lowDishes:aLow}=collectMonthlyDishData('aoya',aY,aMo);
+  // 瑛太の今月完食度データ自動収集
+  const {highDishes:eHigh,lowDishes:eLow}=collectMonthlyDishData('eita',eY,eMo);
+  const aHighStr=aHigh.length>0?aHigh.slice(0,8).join('、'):'記録なし';
+  const aLowStr=aLow.length>0?aLow.slice(0,8).join('、'):'記録なし';
+  const eHighStr=eHigh.length>0?eHigh.slice(0,8).join('、'):'記録なし';
+  const eLowStr=eLow.length>0?eLow.slice(0,8).join('、'):'記録なし';
+  const prompt=`碧也（月齢6か月・離乳食初期）と瑛太（2歳10か月・幼児食）の2人分の来週の買い物リストを作ってください。
+
+【碧也の完食度データ（カレンダーより自動集計）】
+よく食べた料理: ${aHighStr}
+食べなかった料理: ${aLowStr}
+追記メモ: ${memoA||'なし'}
+
+【瑛太の完食度データ（カレンダーより自動集計）】
+よく食べた料理: ${eHighStr}
+食べなかった料理: ${eLowStr}
+追記メモ: ${memoE||'なし'}
+
+上記の完食データを踏まえ、以下の形式で簡潔に出力してください：
+
+■ 2人共通食材（3〜5品）: 食材名と用途を1行で
+■ 碧也専用食材（2〜3品）: 食材名のみ
+■ 瑛太専用食材（2〜3品）: 食材名のみ
+■ 栄養補正ポイント（1〜2文）
+
+全体を500字以内でまとめてください。`;
+  await callGemini(prompt,'shopping-ai-output','shopping-run-btn');
+}
+
+
+// ========== メニュー削除機能 ==========
+function deleteMeal(child, d, wi, di, meal){
+  if(!confirm('この献立を削除しますか？\n（元に戻すには「献立を変更・追加」から再設定できます）')) return;
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const customKey='custom-'+child+'-'+year+'-'+month+'-'+d;
+  const baseMenu=child==='aoya'?aMenu[wi%4][di]:eMenu[wi%4][di];
+  // 既存のカスタムメニューを取得、なければベースメニューをベースに
+  let cm=getCustomMenu(customKey)||{...baseMenu};
+  cm[meal]='（削除済み）';
+  try{ const sv=JSON.stringify(cm); localStorage.setItem(customKey, sv); fsSet('menus', customKey, sv); }catch(e){}
+  // カレンダーと詳細を再描画
+  if(child==='aoya'){aRenderCal();aSelDay(d,wi,di);}
+  else{eRenderCal();eSelDay(d,wi,di);}
+}
+function restoreMeal(child, d, wi, di, meal){
+  const year=child==='aoya'?aY:eY;
+  const month=child==='aoya'?aMo:eMo;
+  const customKey='custom-'+child+'-'+year+'-'+month+'-'+d;
+  try{ localStorage.removeItem(customKey); fsDel('menus', customKey); }catch(e){}
+  if(child==='aoya'){aRenderCal();aSelDay(d,wi,di);}
+  else{eRenderCal();eSelDay(d,wi,di);}
+}
+
+
+
+// ========== 栄養バランスAI評価・献立修正 ==========
+let nutrChild = 'eita';
+
+function toggleNutrChild(c){
+  nutrChild = c;
+  ['aoya','eita','both'].forEach(id => {
+    const btn = document.getElementById('nutr-child-'+id);
+    if(btn) btn.className = 'ai-sel-chip' + (c===id?' on':'');
+  });
+}
+
+function updateNutrImproveWeekSel(){
+  const child = document.getElementById('nutr-improve-child-sel').value;
+  const year = child==='aoya'?aY:eY;
+  const month = child==='aoya'?aMo:eMo;
+  const fd = new Date(year,month,1).getDay();
+  const dim = new Date(year,month+1,0).getDate();
+  const totalWeeks = Math.floor((fd+dim-1)/7)+1;
+  const sel = document.getElementById('nutr-improve-week-sel');
+  sel.innerHTML = '';
+  for(let w=1;w<=totalWeeks;w++){
+    const opt=document.createElement('option');
+    opt.value=w; opt.textContent='第'+w+'週';
+    sel.appendChild(opt);
+  }
+  // 来月分も追加
+  let nm=month+1,ny=year;
+  if(nm>11){nm=0;ny++;}
+  const fd2=new Date(ny,nm,1).getDay();
+  const dim2=new Date(ny,nm+1,0).getDate();
+  const tw2=Math.floor((fd2+dim2-1)/7)+1;
+  for(let w=1;w<=Math.min(tw2,4);w++){
+    const opt=document.createElement('option');
+    opt.value='next-'+w;
+    opt.textContent=(nm+1)+'月 第'+w+'週';
+    sel.appendChild(opt);
+  }
+}
+
+async function runNutritionEval(){
+  const btn = document.getElementById('nutr-eval-btn');
+  const outEl = document.getElementById('nutr-eval-output');
+  const improveBox = document.getElementById('nutr-improve-box');
+  btn.disabled = true;
+  outEl.style.maxHeight=''; outEl.style.overflow='visible';
+  outEl.className = 'ai-output show';
+  outEl.innerHTML = '<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:8px;">栄養データを分析中...</span></div>';
+  improveBox.classList.remove('show');
+
+  const year = parseInt(document.getElementById('nutrition-year-sel').value);
+  const month = parseInt(document.getElementById('nutrition-month-sel').value);
+  const dim = new Date(year,month+1,0).getDate();
+
+  // データ構築
+  function buildNutrSummary(child){
+    const result = calcMonthlyNutrition(child, year, month);
+    const std = child==='aoya'
+      ? AOYA_STANDARD_DAY.map(v=>v*dim)
+      : EITA_STANDARD_DAY.map(v=>v*dim);
+    const ratios = result.total.map((v,i)=>std[i]>0?Math.round(v/std[i]*100):0);
+    const labels = ['エネルギー','たんぱく質','脂質','炭水化物','カルシウム','鉄','ビタミンA','ビタミンC'];
+    const name = child==='aoya'?'碧也（月齢6か月・離乳食初期）':'瑛太（2歳10か月・幼児食）';
+    let s = `【${name}】記録${result.recordedDays}/${dim}日\n`;
+    labels.forEach((l,i)=>{
+      const r=ratios[i];
+      const tag = r>=80?'十分':r>=50?'不足気味':'不足';
+      s += `  ${l}: ${r}%（${tag}）\n`;
+    });
+    return s;
+  }
+
+  let dataText = '';
+  if(nutrChild==='both'){
+    dataText = buildNutrSummary('aoya') + '\n' + buildNutrSummary('eita');
+  } else {
+    dataText = buildNutrSummary(nutrChild);
+  }
+
+  const targetDesc = nutrChild==='aoya'?'碧也（月齢6か月・離乳食初期）':
+                     nutrChild==='eita'?'瑛太（2歳10か月・幼児食）':'碧也と瑛太の2人';
+
+  const prompt = `以下は${targetDesc}の今月の栄養バランス充足率データです。
+
+${dataText}
+
+以下の観点で評価と改善提案をしてください（簡潔に）：
+
+1. 栄養バランスの総評（2文）
+2. 不足栄養素（60%未満）と補う食材・料理（各1文）
+3. 翌週の優先アドバイス（上位2点、各1文）
+
+全体を500字以内・箇条書きでまとめてください。`;
+
+  try{
+    const res = await fetch(GEMINI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:1500,temperature:0.7}
+      })
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      outEl.innerHTML='エラー('+res.status+'): '+(err.error?err.error.message:res.statusText);
+    } else {
+      const data=await res.json();
+      if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
+        window._lastNutrEvalText = data.candidates[0].content.parts[0].text;
+        renderAIOutput(outEl, window._lastNutrEvalText);
+        // 献立修正ボックスを表示
+        improveBox.classList.add('show');
+        updateNutrImproveWeekSel();
+        document.getElementById('nutr-improve-preview').className='improve-preview-box';
+        document.getElementById('nutr-improve-confirm').style.display='none';
+      } else {
+        outEl.innerHTML='回答を取得できませんでした。';
+      }
+    }
+  }catch(e){
+    outEl.innerHTML='ネットワークエラー: '+e.message;
+  }
+  btn.disabled=false;
+}
+
+async function generateNutrImprovedMenu(){
+  const evalText = window._lastNutrEvalText||'';
+  if(!evalText){alert('先に栄養バランス評価を実行してください');return;}
+  const child = document.getElementById('nutr-improve-child-sel').value;
+  const genBtn = document.getElementById('nutr-improve-gen-btn');
+  const preview = document.getElementById('nutr-improve-preview');
+  const confirm = document.getElementById('nutr-improve-confirm');
+  genBtn.disabled=true;
+  preview.className='improve-preview-box show';
+  preview.innerHTML='<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:8px;">栄養改善献立を生成中...</span></div>';
+  confirm.style.display='none';
+
+  const ageCtx = child==='aoya'
+    ?'生後6か月の赤ちゃん（碧也）、離乳食初期。ペースト状・塩分不使用。1日2食（朝・昼）'
+    :'2歳10か月の男の子（瑛太）、幼児食期。薄味。1日3食（朝・昼・夕）';
+  const mealFields = child==='aoya'
+    ?'"b":"朝食","l":"昼食"'
+    :'"b":"朝食","l":"昼食","d":"夕食"';
+
+  const prompt = `以下の栄養バランス評価をもとに、${ageCtx}の翌週7日分の献立を提案してください。
+
+【栄養バランス評価と改善提案】
+${evalText}
+
+特に不足している栄養素を補える食材・料理を積極的に取り入れた献立にしてください。
+
+必ず以下のJSON形式のみで出力し、マークダウン記法（\`\`\`）は使わないでください：
+[
+  {"day":1,${mealFields}},
+  {"day":2,${mealFields}},
+  {"day":3,${mealFields}},
+  {"day":4,${mealFields}},
+  {"day":5,${mealFields}},
+  {"day":6,${mealFields}},
+  {"day":7,${mealFields}}
+]`;
+
+  try{
+    const res=await fetch(GEMINI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:1500,temperature:0.6}
+      })
+    });
+    if(!res.ok){preview.innerHTML='エラーが発生しました。再試行してください。';genBtn.disabled=false;return;}
+    const data=await res.json();
+    if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
+      const raw=data.candidates[0].content.parts[0].text;
+      let jsonStr=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const jMatch=jsonStr.match(/\[[\s\S]*\]/);
+      if(!jMatch){preview.innerHTML='献立データの解析に失敗しました。再試行してください。<br><small>'+raw.substring(0,200)+'</small>';genBtn.disabled=false;return;}
+      const menus=JSON.parse(jMatch[0]);
+      window._pendingNutrMenus={child,menus};
+      let html='<strong>栄養改善を考慮した7日分の献立：</strong><br><br>';
+      menus.forEach((m,i)=>{
+        html+=`<div style="padding:6px 0;border-bottom:1px solid #e0ddd6;"><strong>${i+1}日目</strong><br>`;
+        html+=`朝：${m.b||'未定'}<br>昼：${m.l||'未定'}`;
+        if(m.d) html+=`<br>夕：${m.d}`;
+        html+='</div>';
+      });
+      preview.innerHTML=html;
+      confirm.style.display='flex';
+    } else {
+      preview.innerHTML='回答を取得できませんでした。';
+    }
+  }catch(e){preview.innerHTML='エラー: '+e.message;}
+  genBtn.disabled=false;
+}
+
+function applyNutrImprovedMenu(){
+  const pending=window._pendingNutrMenus;
+  if(!pending){alert('献立データがありません');return;}
+  const {child, menus}=pending;
+  const selVal=document.getElementById('nutr-improve-week-sel').value;
+  let targetYear,targetMonth,targetWeek;
+  if(selVal.startsWith('next-')){
+    targetWeek=parseInt(selVal.replace('next-',''));
+    targetMonth=(child==='aoya'?aMo:eMo)+1;
+    targetYear=child==='aoya'?aY:eY;
+    if(targetMonth>11){targetMonth=0;targetYear++;}
+  } else {
+    targetWeek=parseInt(selVal);
+    targetYear=child==='aoya'?aY:eY;
+    targetMonth=child==='aoya'?aMo:eMo;
+  }
+  const fd=new Date(targetYear,targetMonth,1).getDay();
+  const dim=new Date(targetYear,targetMonth+1,0).getDate();
+  let dayCount=0;
+  for(let d=1;d<=dim;d++){
+    const wi=Math.floor((fd+d-1)/7);
+    if(wi+1!==targetWeek) continue;
+    if(dayCount>=menus.length) break;
+    const m=menus[dayCount];
+    const key='custom-'+child+'-'+targetYear+'-'+targetMonth+'-'+d;
+    const data={b:m.b||'',l:m.l||''};
+    if(m.d) data.d=m.d;
+    try{const sv=JSON.stringify(data);localStorage.setItem(key,sv);fsSet('menus',key,sv);}catch(e){}
+    dayCount++;
+  }
+  if(child==='aoya') aRenderCal();
+  else eRenderCal();
+  document.getElementById('nutr-improve-confirm').style.display='none';
+  document.getElementById('nutr-improve-preview').innerHTML+='<div style="margin-top:8px;padding:8px;background:#EEEDFE;border-radius:6px;color:#3C3489;font-weight:600;font-size:12px;">第'+targetWeek+'週のカレンダーに反映しました！献立タブで確認してください。</div>';
+  delete window._pendingNutrMenus;
+}
+
+function cancelNutrImprovedMenu(){
+  delete window._pendingNutrMenus;
+  document.getElementById('nutr-improve-preview').className='improve-preview-box';
+  document.getElementById('nutr-improve-confirm').style.display='none';
+}
+
+// ========== 栄養バランスチャート ==========
+
+// 栄養素キー: [エネルギーkcal, たんぱく質g, 脂質g, 炭水化物g, カルシウムmg, 鉄mg, VitA μgRE, VitC mg]
+const NUTR_KEYS = ['エネルギー(kcal)','たんぱく質(g)','脂質(g)','炭水化物(g)','カルシウム(mg)','鉄(mg)','ビタミンA(μg)','ビタミンC(mg)'];
+const NUTR_UNITS = ['kcal','g','g','g','mg','mg','μg','mg'];
+
+// 1食あたりの栄養素 [kcal, Pro, Fat, Carb, Ca, Fe, VitA, VitC]
+// 碧也（離乳食初期：少量ペースト1食分の目安）
+const AOYA_NUTR = {
+  '10倍粥':           [20, 0.4, 0.1, 4.4, 2, 0.1, 0, 0],
+  'にんじんペースト':  [8,  0.1, 0.0, 1.8, 5, 0.1, 145, 2],
+  'かぼちゃペースト':  [12, 0.2, 0.0, 2.8, 5, 0.1, 42, 6],
+  'さつまいもペースト':[18, 0.1, 0.0, 4.2, 7, 0.1, 1, 6],
+  'ほうれん草粥':      [22, 0.6, 0.1, 4.7, 20, 0.5, 70, 5],
+  'にんじん粥':        [24, 0.4, 0.1, 5.4, 7, 0.2, 145, 2],
+  'かぼちゃ粥':        [28, 0.5, 0.1, 6.4, 7, 0.2, 42, 6],
+  'さつまいも粥':      [30, 0.4, 0.1, 7.0, 9, 0.2, 1, 6],
+  '豆腐ペースト':      [10, 0.9, 0.6, 0.3, 11, 0.1, 0, 0],
+  'にんじん豆腐':      [14, 0.9, 0.6, 1.7, 14, 0.2, 72, 1],
+  'かぼちゃ豆腐':      [16, 0.9, 0.6, 2.4, 14, 0.2, 21, 3],
+  'ほうれん草豆腐':    [12, 1.0, 0.6, 0.7, 22, 0.4, 40, 3],
+  'さつまいも豆腐':    [18, 0.9, 0.6, 3.2, 13, 0.2, 1, 3],
+  '野菜ミックス粥':    [28, 0.6, 0.1, 6.2, 12, 0.3, 80, 5],
+  'バナナペースト':    [15, 0.2, 0.0, 3.6, 2, 0.1, 2, 5],
+  'にんじんポタージュ':[14, 0.3, 0.1, 3.1, 8, 0.2, 145, 3],
+  'かぼちゃスープ':    [16, 0.3, 0.1, 3.7, 6, 0.1, 42, 5],
+  '豆腐あんかけ':      [14, 1.1, 0.7, 0.8, 13, 0.2, 10, 1],
+  'ほうれん草ペースト':[8,  0.6, 0.1, 1.0, 22, 0.5, 70, 8],
+  'さつまいもスープ':  [16, 0.2, 0.0, 3.7, 6, 0.1, 1, 5],
+  'りんごペースト':    [10, 0.0, 0.0, 2.5, 2, 0.0, 1, 3],
+  'バナナヨーグルト':  [22, 0.7, 0.3, 4.0, 32, 0.1, 4, 5],
+  'とうふすまし汁':    [12, 1.0, 0.7, 0.4, 12, 0.1, 0, 0],
+  'にんじんスープ':    [10, 0.2, 0.0, 2.2, 6, 0.1, 145, 2],
+  'かぼちゃあんかけ':  [18, 0.5, 0.1, 4.0, 7, 0.2, 42, 5],
+  'ほうれん草スープ':  [8,  0.4, 0.1, 1.2, 16, 0.4, 55, 6],
+  '豆腐野菜煮':        [18, 1.2, 0.8, 1.5, 20, 0.3, 50, 3],
+  '彩り野菜粥':        [30, 0.6, 0.1, 6.5, 14, 0.3, 90, 6],
+};
+
+// 瑛太（幼児食1食あたりの目安）
+const EITA_NUTR = {
+  'ご飯':              [168, 2.5, 0.3, 38.1, 3, 0.1, 0, 0],
+  '食パン':            [158, 5.6, 2.6, 28.0, 29, 0.6, 0, 0],
+  'おにぎり':          [156, 2.7, 0.3, 35.6, 4, 0.2, 0, 0],
+  '卵焼き':            [78, 6.1, 5.4, 0.8, 25, 0.9, 75, 0],
+  'みそ汁':            [18, 1.4, 0.7, 1.9, 22, 0.5, 5, 0],
+  '納豆':              [100, 8.3, 5.0, 5.4, 90, 3.3, 0, 0],
+  'ウインナー':         [95, 3.6, 8.5, 0.7, 5, 0.4, 5, 0],
+  'スクランブルエッグ': [90, 6.2, 6.9, 0.5, 27, 1.0, 90, 0],
+  'バナナ':            [53, 0.6, 0.1, 12.9, 6, 0.3, 6, 16],
+  'ヨーグルト':        [56, 3.6, 3.0, 4.9, 120, 0.1, 28, 1],
+  'ホットケーキ':       [210, 6.2, 5.3, 33.0, 160, 0.8, 40, 0],
+  'チーズ':            [68, 4.1, 5.2, 0.3, 126, 0.1, 52, 0],
+  'りんご':            [28, 0.1, 0.1, 7.0, 3, 0.1, 2, 3],
+  'ロールパン':         [130, 3.8, 3.2, 21.0, 24, 0.5, 0, 0],
+  'うどん':            [148, 3.9, 0.6, 31.2, 8, 0.5, 0, 0],
+  'にんじんの煮物':     [32, 0.5, 0.2, 7.2, 18, 0.3, 290, 5],
+  'チャーハン':         [280, 7.1, 9.2, 40.2, 18, 0.8, 60, 2],
+  '野菜スープ':         [28, 1.0, 0.3, 5.6, 20, 0.6, 80, 12],
+  'コーンスープ':       [48, 1.8, 1.2, 7.8, 28, 0.4, 15, 2],
+  'スパゲッティ':       [245, 8.5, 3.2, 44.0, 12, 1.2, 10, 2],
+  'カレーライス（甘口）':[380, 8.2, 7.5, 68.0, 40, 1.5, 50, 8],
+  'カレーライス':       [380, 8.2, 7.5, 68.0, 40, 1.5, 50, 8],
+  '鶏照り焼き':         [168, 18.5, 7.2, 5.8, 8, 0.5, 20, 2],
+  '鶏の照り焼き':       [168, 18.5, 7.2, 5.8, 8, 0.5, 20, 2],
+  'かぼちゃ煮':         [58, 1.2, 0.3, 13.0, 14, 0.5, 110, 22],
+  '豆腐ハンバーグ':     [148, 12.5, 8.2, 7.0, 78, 1.8, 10, 1],
+  'ほうれん草':         [18, 1.7, 0.3, 2.4, 42, 1.8, 210, 28],
+  '鮭のホイル焼き':     [148, 22.0, 4.8, 0.2, 18, 0.5, 55, 2],
+  '鮭':                [148, 22.0, 4.8, 0.2, 18, 0.5, 55, 2],
+  'さつまいも煮':       [82, 0.9, 0.2, 19.2, 28, 0.5, 3, 18],
+  'ミートボール':       [168, 10.2, 11.2, 6.8, 20, 1.0, 15, 2],
+  'ブロッコリー':       [22, 2.5, 0.4, 2.8, 38, 0.8, 42, 88],
+  '焼きそば':           [295, 8.5, 7.2, 45.0, 18, 1.0, 20, 8],
+  'ゆで卵':             [70, 5.8, 4.9, 0.5, 26, 0.9, 75, 0],
+  '鶏とじゃがいもの煮物':[188, 12.5, 4.8, 22.0, 25, 1.0, 20, 18],
+  '肉野菜炒め':         [198, 12.0, 11.5, 10.0, 40, 1.5, 120, 20],
+  'わかめスープ':       [18, 1.2, 0.3, 2.8, 58, 0.6, 10, 3],
+  '肉じゃが':           [185, 8.8, 5.2, 26.5, 25, 1.2, 10, 22],
+  'スパゲッティ・野菜スープ':[245,8.5,3.2,44.0,12,1.2,10,2],
+  'おにぎり・から揚げ': [320, 18.0, 12.0, 36.0, 22, 1.2, 15, 2],
+  'ラーメン（薄味）':   [310, 9.2, 5.5, 54.0, 22, 0.8, 5, 2],
+  'うどん・にんじんの煮物':[180,4.4,0.8,38.4,26,0.8,290,5],
+  'カレーうどん':       [320, 9.5, 5.8, 56.0, 28, 1.2, 35, 8],
+  '鮭ちゃんちゃん焼き': [195, 22.5, 7.2, 8.5, 42, 1.2, 68, 18],
+  '鶏の照り焼き・ブロッコリー':[190,21.0,7.6,5.8,46,1.3,62,90],
+  '豚しょうが焼き':     [218, 16.5, 12.8, 7.5, 15, 1.0, 8, 3],
+  '小松菜':             [12, 1.4, 0.2, 1.5, 148, 2.8, 260, 38],
+  '魚グリル':           [148, 20.5, 5.8, 0.2, 25, 0.8, 45, 2],
+  'かぼちゃサラダ':     [62, 1.5, 2.2, 10.0, 18, 0.5, 95, 20],
+  '鶏とじゃがいも':     [188, 12.5, 4.8, 22.0, 25, 1.0, 20, 18],
+  'ミートボール・野菜スープ':[186,11.2,11.5,9.6,58,1.6,95,14],
+  '魚ホイル焼き':       [148, 20.5, 5.8, 0.2, 25, 0.8, 45, 2],
+  '鮭ムニエル':         [178, 22.0, 7.8, 2.5, 28, 0.8, 55, 3],
+  '豚しょうが焼き・コーン':[228,16.5,12.8,10.5,22,1.0,8,5],
+  '豆腐スープ':         [38, 2.8, 1.8, 2.5, 42, 0.5, 0, 0],
+  'から揚げ':           [188, 16.8, 10.5, 6.2, 12, 0.8, 15, 2],
+  '魚グリル・小松菜':   [160, 21.9, 6.0, 1.7, 173, 3.6, 305, 40],
+};
+
+// 標準摂取量（1日分）- 日本人の食事摂取基準2020
+// [kcal, Pro, Fat, Carb, Ca, Fe, VitA, VitC]
+const AOYA_STANDARD_DAY = [600, 10, 15, 80, 250, 4.5, 300, 40]; // 6-11か月
+const EITA_STANDARD_DAY = [1250, 20, 40, 175, 500, 4.0, 350, 40]; // 2-3歳男
+
+// 碧也の1食分標準（1日2食として半分）
+const AOYA_MEAL_STD = AOYA_STANDARD_DAY.map(v => v / 2);
+// 瑛太の1食分標準（1日3食として1/3）
+const EITA_MEAL_STD = EITA_STANDARD_DAY.map(v => v / 3);
+
+let aoyaRadarChart = null, eitaRadarChart = null, compareBarChart = null;
+
+function initNutritionSelects(){
+  const today = new Date();
+  const ySel = document.getElementById('nutrition-year-sel');
+  const mSel = document.getElementById('nutrition-month-sel');
+  for(let y = today.getFullYear()-1; y <= today.getFullYear()+1; y++){
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y+'年';
+    if(y === today.getFullYear()) o.selected = true;
+    ySel.appendChild(o);
+  }
+  for(let m = 0; m < 12; m++){
+    const o = document.createElement('option');
+    o.value = m; o.textContent = (m+1)+'月';
+    if(m === today.getMonth()) o.selected = true;
+    mSel.appendChild(o);
+  }
+}
+
+function getNutrFromMealName(name, nutrDB){
+  if(!name || name === '（削除済み）' || name === '（未設定）') return new Array(8).fill(0);
+  // 完全一致
+  if(nutrDB[name]) return nutrDB[name];
+  // 部分一致（最初に一致したもの）
+  for(const key of Object.keys(nutrDB)){
+    if(name.includes(key) || key.includes(name.split('・')[0])) return nutrDB[key];
+  }
+  // デフォルト（推定平均）
+  return [80, 3, 2, 12, 20, 0.5, 20, 5];
+}
+
+function calcMonthlyNutrition(child, year, month){
+  const menus = child === 'aoya' ? aMenu : eMenu;
+  const nutrDB = child === 'aoya' ? AOYA_NUTR : EITA_NUTR;
+  const fd = new Date(year, month, 1).getDay();
+  const dim = new Date(year, month+1, 0).getDate();
+  const total = new Array(8).fill(0);
+  let recordedDays = 0;
+  for(let d = 1; d <= dim; d++){
+    const wi = Math.floor((fd+d-1)/7), di = (fd+d-1)%7;
+    const baseMenu = menus[wi%4][di];
+    const cm = getCustomMenu('custom-'+child+'-'+year+'-'+month+'-'+d);
+    const m = cm || baseMenu;
+    const kkey = child+'-'+year+'-'+month+'-'+d;
+    const kb = getKanshoku(kkey);
+    const meals = child === 'aoya'
+      ? [{menu:m.b, avgRate:getSlotAvgRate(kb,'b')}, {menu:m.l, avgRate:getSlotAvgRate(kb,'l')}]
+      : [{menu:m.b, avgRate:getSlotAvgRate(kb,'b')}, {menu:m.l, avgRate:getSlotAvgRate(kb,'l')}, {menu:m.d, avgRate:getSlotAvgRate(kb,'d')}];
+    let dayHasRecord = false;
+    meals.forEach(meal => {
+      const pct = meal.avgRate !== null ? meal.avgRate/100 : 0;
+      if(pct > 0){
+        dayHasRecord = true;
+        const nutr = getNutrFromMealName(meal.menu, nutrDB);
+        nutr.forEach((v, i) => { total[i] += v * pct; });
+      }
+    });
+    if(dayHasRecord) recordedDays++;
+  }
+  return {total, recordedDays, dim};
+}
+
+function renderNutritionCharts(){
+  const year = parseInt(document.getElementById('nutrition-year-sel').value);
+  const month = parseInt(document.getElementById('nutrition-month-sel').value);
+
+  // 月の標準摂取量（日数分）
+  const dim = new Date(year, month+1, 0).getDate();
+  const aoyaMonthStd = AOYA_STANDARD_DAY.map(v => v * dim);
+  const eitaMonthStd = EITA_STANDARD_DAY.map(v => v * dim);
+
+  const aoyaData = calcMonthlyNutrition('aoya', year, month);
+  const eitaData = calcMonthlyNutrition('eita', year, month);
+
+  // 充足率（%）計算
+  const aoyaRatio = aoyaData.total.map((v,i) => aoyaMonthStd[i] > 0 ? Math.round(v/aoyaMonthStd[i]*100) : 0);
+  const eitaRatio = eitaData.total.map((v,i) => eitaMonthStd[i] > 0 ? Math.round(v/eitaMonthStd[i]*100) : 0);
+
+  // レーダーチャートラベル（短縮）
+  const radarLabels = ['エネルギー','たんぱく質','脂質','炭水化物','カルシウム','鉄','ビタミンA','ビタミンC'];
+
+  // 碧也レーダーチャート
+  const aCtx = document.getElementById('aoya-radar-chart').getContext('2d');
+  if(aoyaRadarChart) aoyaRadarChart.destroy();
+  aoyaRadarChart = new Chart(aCtx, {
+    type:'radar',
+    data:{
+      labels:radarLabels,
+      datasets:[{
+        label:'碧也の充足率(%)',
+        data:aoyaRatio,
+        backgroundColor:'rgba(24,95,165,0.15)',
+        borderColor:'#185FA5',
+        pointBackgroundColor:'#185FA5',
+        borderWidth:2,
+        pointRadius:4,
+      },{
+        label:'標準(100%)',
+        data:new Array(8).fill(100),
+        backgroundColor:'rgba(0,0,0,0)',
+        borderColor:'#d3d1c7',
+        borderWidth:1,
+        borderDash:[4,4],
+        pointRadius:0,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      scales:{r:{min:0,max:150,ticks:{stepSize:50,font:{size:9}},pointLabels:{font:{size:10}}}},
+      plugins:{legend:{display:false}},
+    }
+  });
+
+  // 碧也バー
+  renderNutrientBars('aoya-nutrient-bars', aoyaRatio, aoyaData.total, AOYA_NUTR_UNITS_ROUND(aoyaData.total), aoyaData.recordedDays, dim, '#185FA5');
+
+  // 瑛太レーダーチャート
+  const eCtx = document.getElementById('eita-radar-chart').getContext('2d');
+  if(eitaRadarChart) eitaRadarChart.destroy();
+  eitaRadarChart = new Chart(eCtx, {
+    type:'radar',
+    data:{
+      labels:radarLabels,
+      datasets:[{
+        label:'瑛太の充足率(%)',
+        data:eitaRatio,
+        backgroundColor:'rgba(29,158,117,0.15)',
+        borderColor:'#1D9E75',
+        pointBackgroundColor:'#1D9E75',
+        borderWidth:2,
+        pointRadius:4,
+      },{
+        label:'標準(100%)',
+        data:new Array(8).fill(100),
+        backgroundColor:'rgba(0,0,0,0)',
+        borderColor:'#d3d1c7',
+        borderWidth:1,
+        borderDash:[4,4],
+        pointRadius:0,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      scales:{r:{min:0,max:150,ticks:{stepSize:50,font:{size:9}},pointLabels:{font:{size:10}}}},
+      plugins:{legend:{display:false}},
+    }
+  });
+
+  renderNutrientBars('eita-nutrient-bars', eitaRatio, eitaData.total, AOYA_NUTR_UNITS_ROUND(eitaData.total), eitaData.recordedDays, dim, '#1D9E75');
+
+  // 比較棒グラフ
+  const cCtx = document.getElementById('compare-bar-chart').getContext('2d');
+  if(compareBarChart) compareBarChart.destroy();
+  compareBarChart = new Chart(cCtx, {
+    type:'bar',
+    data:{
+      labels:radarLabels,
+      datasets:[
+        {label:'碧也(%)',data:aoyaRatio,backgroundColor:'rgba(24,95,165,0.7)',borderRadius:4},
+        {label:'瑛太(%)',data:eitaRatio,backgroundColor:'rgba(29,158,117,0.7)',borderRadius:4},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        y:{min:0,max:160,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#e0ddd6'}},
+        x:{ticks:{font:{size:9}}},
+      },
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11}}},
+        annotation:{annotations:{line100:{type:'line',yMin:100,yMax:100,borderColor:'#e0ddd6',borderWidth:2,borderDash:[6,4]}}}
+      },
+    }
+  });
+}
+
+function AOYA_NUTR_UNITS_ROUND(total){
+  return total.map((v,i) => {
+    if(i===0) return Math.round(v)+'kcal';
+    if(i<=3) return v.toFixed(1)+'g';
+    if(i<=5) return Math.round(v)+'mg';
+    return Math.round(v)+(i===6?'μg':'mg');
+  });
+}
+
+function renderNutrientBars(containerId, ratios, totals, formatted, recordedDays, dim, color){
+  const el = document.getElementById(containerId);
+  const labels = ['エネルギー','たんぱく質','脂質','炭水化物','カルシウム','鉄','ビタミンA','ビタミンC'];
+  el.innerHTML = `<div style="font-size:10px;color:#888780;margin-bottom:6px;">記録あり: ${recordedDays}/${dim}日分のデータから算出</div>` +
+  labels.map((label,i) => {
+    const r = ratios[i];
+    const barW = Math.min(r, 150);
+    const barColor = r >= 80 ? color : r >= 50 ? '#FAC775' : '#F09595';
+    const tagClass = r >= 80 ? 'ntag-ok' : r >= 50 ? 'ntag-high' : 'ntag-low';
+    const tagText = r >= 80 ? '十分' : r >= 50 ? '不足気味' : '不足';
+    return `<div class="nutrient-row">
+      <span class="nutrient-name">${label}</span>
+      <div class="nutrient-bar-wrap">
+        <div class="nutrient-bar-fill" style="width:${barW}%;background:${barColor};"></div>
+      </div>
+      <span class="nutrient-val">${formatted[i]} (${r}%)</span>
+      <span class="nutrient-tag ${tagClass}">${tagText}</span>
+    </div>`;
+  }).join('');
+}
+
+
+// ========== データリセット ==========
+function openResetModal(){
+  document.getElementById('reset-modal').style.display='flex';
+}
+
+async function executeReset(){
+  document.getElementById('reset-modal').style.display='none';
+  const badge = document.getElementById('sync-badge');
+  if(badge) badge.textContent='削除中...';
+
+  // localStorageから関連キーを全削除
+  const keysToDelete=[];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(key&&(key.startsWith('custom-')||key.startsWith('k_'))){
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(k=>localStorage.removeItem(k));
+
+  // Firestoreからも削除
+  if(window._db){
+    try{
+      const {getDocs,deleteDoc,collection}=await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
+      const deleteCollection=async(colName)=>{
+        const snap=await getDocs(collection(window._db,colName));
+        const dels=[];
+        snap.forEach(doc=>dels.push(deleteDoc(doc.ref)));
+        await Promise.all(dels);
+      };
+      await deleteCollection('menus');
+      await deleteCollection('kanshoku');
+    }catch(e){
+      console.warn('Firestore削除エラー:', e);
+    }
+  }
+
+  // カレンダー再描画
+  aRenderCal();
+  eRenderCal();
+  if(badge) badge.textContent='削除完了';
+  setTimeout(()=>{
+    if(badge) badge.textContent='クラウド同期中';
+  }, 2000);
+  alert('データを初期化しました。');
+}
+
+
+
+// ========== 料理写真栄養解析 ==========
+let photoChild = 'aoya';
+let photoBase64 = null;
+let photoHistory = [];
+
+function togglePhotoChild(c){
+  photoChild = c;
+  document.getElementById('photo-child-aoya').className='ai-sel-chip'+(c==='aoya'?' on':'');
+  document.getElementById('photo-child-eita').className='ai-sel-chip'+(c==='eita'?' on':'');
+}
+
+function onPhotoSelected(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const dataUrl = e.target.result;
+    photoBase64 = dataUrl.split(',')[1];
+    const mimeType = file.type || 'image/jpeg';
+    window._photoMime = mimeType;
+    // プレビュー表示
+    const preview = document.getElementById('photo-preview');
+    const placeholder = document.getElementById('photo-upload-placeholder');
+    const area = document.getElementById('photo-upload-area');
+    preview.src = dataUrl;
+    preview.className = 'photo-preview show';
+    placeholder.style.display = 'none';
+    area.className = 'photo-upload-area has-image';
+    document.getElementById('photo-analyze-btn').disabled = false;
+    document.getElementById('photo-result-area').style.display = 'none';
+    document.getElementById('photo-ai-output').className = 'ai-output';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto(){
+  photoBase64 = null;
+  document.getElementById('photo-preview').className = 'photo-preview';
+  document.getElementById('photo-upload-placeholder').style.display = 'block';
+  document.getElementById('photo-upload-area').className = 'photo-upload-area';
+  document.getElementById('photo-analyze-btn').disabled = true;
+  document.getElementById('photo-result-area').style.display = 'none';
+  document.getElementById('photo-file-input').value = '';
+}
+
+async function analyzePhoto(){
+  if(!photoBase64){ alert('写真を選択してください'); return; }
+  const btn = document.getElementById('photo-analyze-btn');
+  const outEl = document.getElementById('photo-ai-output');
+  btn.disabled = true;
+  outEl.className = 'ai-output show';
+  outEl.innerHTML = '<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:8px;">写真を解析中...</span></div>';
+  document.getElementById('photo-result-area').style.display = 'none';
+
+  const childName = photoChild==='aoya' ? '碧也（月齢6か月・離乳食初期）' : '瑛太（2歳10か月・幼児食）';
+  const ageCtx = photoChild==='aoya'
+    ? '生後6か月の赤ちゃん。離乳食初期でペースト状の食事。'
+    : '2歳10か月の男の子。幼児食期。';
+
+  const prompt = `この料理・食事の写真を解析してください。対象は${childName}（${ageCtx}）です。
+
+以下のJSON形式のみで回答してください（説明不要）：
+{
+  "foods": ["食材・料理名1", "食材・料理名2"],
+  "nutrients": {
+    "energy": 数値(kcal),
+    "protein": 数値(g),
+    "fat": 数値(g),
+    "carbs": 数値(g),
+    "calcium": 数値(mg),
+    "iron": 数値(mg),
+    "vitA": 数値(μg),
+    "vitC": 数値(mg)
+  },
+  "comment": "この子どもに向けた栄養コメント（2文以内）"
+}`;
+
+  try{
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + GEMINI_KEY;
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{
+          role:'user',
+          parts:[
+            {inline_data:{mime_type: window._photoMime||'image/jpeg', data: photoBase64}},
+            {text: prompt}
+          ]
+        }],
+        generationConfig:{maxOutputTokens:400, temperature:0.2}
+      })
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      outEl.innerHTML='エラー('+res.status+'): '+(err.error?err.error.message:res.statusText);
+      btn.disabled=false; return;
+    }
+    const data = await res.json();
+    if(!data.candidates||!data.candidates[0]){
+      outEl.innerHTML='解析結果を取得できませんでした。'; btn.disabled=false; return;
+    }
+    const raw = data.candidates[0].content.parts[0].text;
+    let parsed;
+    try{
+      const jsonStr = raw.replace(/```json|```/g,'').trim();
+      parsed = JSON.parse(jsonStr.match(/\{[\s\S]*\}/)[0]);
+    }catch(e){
+      outEl.innerHTML='解析に失敗しました。より鮮明な写真でお試しください。'; btn.disabled=false; return;
+    }
+
+    // 結果表示
+    outEl.className = 'ai-output';
+    const resultArea = document.getElementById('photo-result-area');
+    resultArea.style.display = 'block';
+
+    // 食材タグ
+    document.getElementById('photo-food-tags').innerHTML =
+      (parsed.foods||[]).map(f=>`<span class="food-tag">${f}</span>`).join('');
+
+    // 栄養素グリッド
+    const n = parsed.nutrients||{};
+    const nutrItems = [
+      {key:'energy', label:'エネルギー', value:n.energy, unit:'kcal', color:'#E63946', max:300},
+      {key:'protein', label:'タンパク質', value:n.protein, unit:'g', color:'#185FA5', max:20},
+      {key:'fat', label:'脂質', value:n.fat, unit:'g', color:'#FAC775', max:15},
+      {key:'carbs', label:'炭水化物', value:n.carbs, unit:'g', color:'#1D9E75', max:40},
+      {key:'calcium', label:'カルシウム', value:n.calcium, unit:'mg', color:'#9FE1CB', max:200},
+      {key:'iron', label:'鉄', value:n.iron, unit:'mg', color:'#534AB7', max:5},
+      {key:'vitA', label:'ビタミンA', value:n.vitA, unit:'μg', color:'#FAC775', max:150},
+      {key:'vitC', label:'ビタミンC', value:n.vitC, unit:'mg', color:'#1D9E75', max:30},
+    ];
+    document.getElementById('photo-nutr-grid').innerHTML = nutrItems.map(item=>{
+      const v = item.value||0;
+      const pct = Math.min(100, Math.round(v/item.max*100));
+      return `<div class="nutr-result-item">
+        <div class="nutr-result-value">${v}<span style="font-size:10px;font-weight:400;">${item.unit}</span></div>
+        <div class="nutr-result-label">${item.label}</div>
+        <div class="nutr-result-bar"><div class="nutr-result-bar-fill" style="width:${pct}%;background:${item.color};"></div></div>
+      </div>`;
+    }).join('');
+
+    // AIコメント
+    document.getElementById('photo-ai-comment').textContent = parsed.comment||'';
+
+    // 履歴追加
+    const now = new Date();
+    const dateStr = (now.getMonth()+1)+'/'+(now.getDate())+' '+(now.getHours())+':'+(String(now.getMinutes()).padStart(2,'0'));
+    photoHistory.unshift({date:dateStr, child:childName, foods:parsed.foods||[], energy:n.energy||0});
+    if(photoHistory.length>5) photoHistory.pop();
+    renderPhotoHistory();
+  }catch(e){
+    outEl.innerHTML='エラー: '+e.message;
+  }
+  btn.disabled=false;
+}
+
+function renderPhotoHistory(){
+  const container = document.getElementById('photo-history');
+  if(photoHistory.length===0){
+    container.innerHTML='<p style="font-size:12px;color:#b4b2a9;">解析履歴はありません</p>';
+    return;
+  }
+  container.innerHTML = photoHistory.map(h=>`
+    <div style="padding:8px;border-bottom:1px solid #e0ddd6;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-size:10px;color:#888780;">${h.date} · ${h.child}</span><br>
+        <span style="font-size:12px;">${(h.foods||[]).slice(0,3).join('・')}</span>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:#E63946;">${h.energy}kcal</span>
+    </div>`).join('');
+}
+
+// ========== 成長曲線 ==========
+// 成長データはHEIGHT_MALE_0_72 / WEIGHT_MALE_0_72に統一
+// 男児 身長（cm）: 月齢0〜72（6歳）
+// 厚生労働省「乳幼児身体発育調査(2010)」男児 身長(cm)
+const HEIGHT_MALE_0_72 = {
+  months: [0,1,2,3,4,5,6,7,8,9,10,11,12,14,16,18,20,22,24,27,30,33,36,42,48,54,60,66,72],
+  p3:  [44.0,48.7,52.3,55.3,57.9,60.0,61.8,63.4,64.8,66.2,67.5,68.6,69.8,71.8,73.8,75.7,77.4,79.0,80.5,82.7,84.8,86.8,88.7,92.4,95.9,99.2,102.3,105.3,107.2],
+  p50: [48.7,54.7,58.4,61.4,63.9,65.9,67.8,69.5,71.0,72.5,73.9,75.1,76.4,78.5,80.5,82.5,84.3,86.0,87.7,90.1,92.4,94.5,96.7,100.7,104.5,108.0,111.5,114.8,117.0],
+  p97: [52.4,60.0,64.0,67.3,70.0,72.2,74.2,75.9,77.5,79.0,80.4,81.7,83.0,85.3,87.5,89.5,91.4,93.2,95.0,97.6,100.0,102.2,104.5,108.9,113.0,116.9,120.5,124.0,126.8],
+};
+// 男児 体重（kg）: 月齢0〜72
+// 厚生労働省「乳幼児身体発育調査(2010)」男児 体重(kg)
+const WEIGHT_MALE_0_72 = {
+  months: [0,1,2,3,4,5,6,7,8,9,10,11,12,14,16,18,20,22,24,27,30,33,36,42,48,54,60,66,72],
+  p3:  [2.10,3.00,3.84,4.57,5.18,5.66,6.06,6.41,6.71,6.98,7.23,7.45,7.66,8.02,8.35,8.65,8.93,9.19,9.44,9.80,10.14,10.47,10.78,11.36,11.91,12.45,12.96,13.46,13.93],
+  p50: [3.00,4.30,5.35,6.08,6.73,7.26,7.73,8.15,8.53,8.88,9.19,9.49,9.76,10.23,10.66,11.07,11.44,11.79,12.13,12.64,13.13,13.60,14.06,14.97,15.84,16.69,17.53,18.35,19.15],
+  p97: [4.00,6.03,7.40,8.40,9.24,9.97,10.60,11.17,11.69,12.17,12.63,13.05,13.44,14.14,14.80,15.43,16.03,16.62,17.20,18.05,18.90,19.74,20.57,22.23,23.88,25.55,27.26,29.01,30.82],
+};
+
+// 成長記録をlocalStorageに保存
+let growthCharts = {};
+
+function getGrowthRecords(child){
+  try{ return JSON.parse(localStorage.getItem('growth_'+child)||'[]'); }catch(e){ return []; }
+}
+function saveGrowthRecords(child, records){
+  try{
+    const sv = JSON.stringify(records);
+    localStorage.setItem('growth_'+child, sv);
+    fsSet('growth', 'child_'+child, sv); // Firestoreにも同期
+  }catch(e){}
+}
+
+function addGrowthRecord(child){
+  const age = parseFloat(document.getElementById(child+'-growth-age').value);
+  const height = parseFloat(document.getElementById(child+'-growth-height').value);
+  const weight = parseFloat(document.getElementById(child+'-growth-weight').value);
+  if(isNaN(age)||age<0){ alert('月齢を入力してください'); return; }
+  if(isNaN(height)&&isNaN(weight)){ alert('身長または体重を入力してください'); return; }
+  const records = getGrowthRecords(child);
+  records.push({age, height:isNaN(height)?null:height, weight:isNaN(weight)?null:weight});
+  records.sort((a,b)=>a.age-b.age);
+  saveGrowthRecords(child, records);
+  document.getElementById(child+'-growth-age').value='';
+  document.getElementById(child+'-growth-height').value='';
+  document.getElementById(child+'-growth-weight').value='';
+  renderGrowthCharts(child);
+}
+
+function deleteGrowthRecord(child, idx){
+  if(!confirm('この記録を削除しますか？')) return;
+  const records = getGrowthRecords(child);
+  records.splice(idx,1);
+  saveGrowthRecords(child, records);
+  renderGrowthCharts(child);
+}
+
+function editGrowthRecord(child, idx){
+  const records = getGrowthRecords(child);
+  const r = records[idx];
+  const container = document.getElementById(child+'-growth-records');
+  const rows = container.querySelectorAll('.growth-record-row, .growth-editing-row');
+  // 既に編集中の行があれば閉じる
+  container.querySelectorAll('.growth-editing-row').forEach(el=>el.remove());
+
+  const editDiv = document.createElement('div');
+  editDiv.className = 'growth-editing-row';
+  editDiv.innerHTML = `
+    <p style="font-size:11px;font-weight:600;color:#534AB7;margin-bottom:8px;">${r.age}か月のデータを編集</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+      <div>
+        <label style="font-size:10px;color:#888780;display:block;margin-bottom:2px;">月齢</label>
+        <input id="edit-age-${child}-${idx}" type="number" value="${r.age}" style="width:100%;padding:5px 8px;border:1px solid #AFA9EC;border-radius:6px;font-size:12px;font-family:inherit;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#888780;display:block;margin-bottom:2px;">身長(cm)</label>
+        <input id="edit-height-${child}-${idx}" type="number" step="0.1" value="${r.height||''}" placeholder="なし" style="width:100%;padding:5px 8px;border:1px solid #AFA9EC;border-radius:6px;font-size:12px;font-family:inherit;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#888780;display:block;margin-bottom:2px;">体重(kg)</label>
+        <input id="edit-weight-${child}-${idx}" type="number" step="0.01" value="${r.weight||''}" placeholder="なし" style="width:100%;padding:5px 8px;border:1px solid #AFA9EC;border-radius:6px;font-size:12px;font-family:inherit;">
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="updateGrowthRecord('${child}',${idx})" style="flex:1;padding:7px;border:none;border-radius:6px;background:#534AB7;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">保存する</button>
+      <button onclick="renderGrowthCharts('${child}')" style="flex:1;padding:7px;border:1px solid #d3d1c7;border-radius:6px;background:#fff;color:#5f5e5a;font-size:12px;cursor:pointer;font-family:inherit;">キャンセル</button>
+    </div>`;
+  // 対象行の直後に挿入
+  const targetRow = container.querySelectorAll('[data-idx]')[idx];
+  if(targetRow) targetRow.after(editDiv);
+  else container.appendChild(editDiv);
+}
+
+function updateGrowthRecord(child, idx){
+  const age = parseFloat(document.getElementById('edit-age-'+child+'-'+idx).value);
+  const height = parseFloat(document.getElementById('edit-height-'+child+'-'+idx).value);
+  const weight = parseFloat(document.getElementById('edit-weight-'+child+'-'+idx).value);
+  if(isNaN(age)||age<0){ alert('月齢を入力してください'); return; }
+  if(isNaN(height)&&isNaN(weight)){ alert('身長または体重を入力してください'); return; }
+  const records = getGrowthRecords(child);
+  records[idx] = {age, height:isNaN(height)?null:height, weight:isNaN(weight)?null:weight};
+  records.sort((a,b)=>a.age-b.age);
+  saveGrowthRecords(child, records);
+  renderGrowthCharts(child);
+}
+
+function getPercentile(value, age, data){
+  // 線形補間でパーセンタイルを推定
+  const months = data.months;
+  let i = months.findIndex(m=>m>=age);
+  if(i<=0) i=1;
+  if(i>=months.length) i=months.length-1;
+  const t=(age-months[i-1])/(months[i]-months[i-1]);
+  const p3=data.p3[i-1]+(data.p3[i]-data.p3[i-1])*t;
+  const p50=data.p50[i-1]+(data.p50[i]-data.p50[i-1])*t;
+  const p97=data.p97[i-1]+(data.p97[i]-data.p97[i-1])*t;
+  if(value<=p3) return '<3%ile（要確認）';
+  if(value<=p50) return Math.round(3+(value-p3)/(p50-p3)*47)+'%ile';
+  if(value<=p97) return Math.round(50+(value-p50)/(p97-p50)*47)+'%ile';
+  return '>97%ile（要確認）';
+}
+
+// キャッシュ: AI予測結果を保持
+const _growthPredCache = {};
+
+function getStdVelocity(age, data){
+  // 標準成長曲線から月齢に応じた成長速度(単位/月)を取得
+  const months=data.months;
+  let i=months.findIndex(m=>m>age);
+  if(i<=0) i=1;
+  if(i>=months.length) i=months.length-1;
+  return (data.p50[i]-data.p50[i-1])/(months[i]-months[i-1]);
+}
+
+function getStdPercentileRatio(value, age, data){
+  // 子どもの現在値が標準曲線の何%位置かを0〜1で返す
+  const months=data.months;
+  let i=months.findIndex(m=>m>=age);
+  if(i<=0) i=1;
+  if(i>=months.length) i=months.length-1;
+  const t=(age-months[i-1])/(months[i]-months[i-1]);
+  const p3=data.p3[i-1]+(data.p3[i]-data.p3[i-1])*t;
+  const p97=data.p97[i-1]+(data.p97[i]-data.p97[i-1])*t;
+  return Math.max(0,Math.min(1,(value-p3)/(p97-p3)));
+}
+
+function predictGrowthStandard(records, data, field, maxAge){
+  // パーセンタイル維持法：子どもの現在パーセンタイルを維持しながら標準曲線に沿って予測
+  const hasData=records.filter(r=>r[field]!==null);
+  if(hasData.length<1) return [];
+  const last=hasData[hasData.length-1];
+  const ratio=getStdPercentileRatio(last[field], last.age, data);
+  const predictions=[];
+  const months=data.months;
+  for(let a=last.age+1;a<=Math.min(maxAge,last.age+24);a++){
+    // 月齢aでのp3とp97を補間
+    let i=months.findIndex(m=>m>=a);
+    if(i<=0) i=1;
+    if(i>=months.length) i=months.length-1;
+    const t=(a-months[i-1])/(months[i]-months[i-1]);
+    const p3=data.p3[i-1]+(data.p3[i]-data.p3[i-1])*t;
+    const p97=data.p97[i-1]+(data.p97[i]-data.p97[i-1])*t;
+    // 現在のパーセンタイル位置を維持
+    const predicted=p3+ratio*(p97-p3);
+    predictions.push({age:a, value:predicted});
+  }
+  return predictions;
+}
+
+async function predictGrowthWithAI(child, field, records, data, maxAge){
+  const cacheKey=child+'-'+field;
+  if(_growthPredCache[cacheKey]) return _growthPredCache[cacheKey];
+
+  const hasData=records.filter(r=>r[field]!==null);
+  if(hasData.length<1) return [];
+  const last=hasData[hasData.length-1];
+  const unit=field==='height'?'cm':'kg';
+  const fieldName=field==='height'?'身長':'体重';
+  const childName=child==='aoya'?'碧也（男児・月齢'+last.age+'か月）':'瑛太（男児・月齢'+last.age+'か月）';
+
+  // 標準予測をベースとして使用
+  const stdPred=predictGrowthStandard(records,data,field,maxAge);
+
+  // 実測データの要約
+  const dataStr=hasData.map(r=>`${r.age}か月: ${r[field]}${unit}`).join(', ');
+
+  // 標準予測値の要約
+  const stdStr=stdPred.slice(0,6).map(p=>`${p.age}か月: ${p.value.toFixed(1)}${unit}`).join(', ');
+
+  const prompt=`${childName}の${fieldName}データと標準成長曲線に基づく予測があります。
+
+【実測データ】
+${dataStr}
+
+【標準成長曲線（パーセンタイル維持法）による予測】
+${stdStr}
+
+以下の点を考慮して、より精度の高い将来予測値を月齢ごとに数値のみ出力してください：
+1. 子どもの現在の成長トレンド（加速・標準・減速）
+2. この月齢帯の標準的な成長速度の変化パターン
+3. 急成長期・緩慢期のパターン
+
+必ず以下のJSON形式のみで回答してください（説明不要）：
+[{"age":${last.age+3},"value":数値},{"age":${last.age+6},"value":数値},{"age":${last.age+9},"value":数値},{"age":${last.age+12},"value":数値}]`;
+
+  try{
+    // タイムアウト付きfetch（10秒）
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),10000);
+    const res=await fetch(GEMINI_URL,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      signal:controller.signal,
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:200,temperature:0.3}})
+    });
+    clearTimeout(timeoutId);
+    if(!res.ok){
+      console.log('AI予測API失敗 status:',res.status,'→標準予測を使用');
+      _growthPredCache[cacheKey]=stdPred;
+      return stdPred;
+    }
+    const d=await res.json();
+    if(!d.candidates||!d.candidates[0]){
+      _growthPredCache[cacheKey]=stdPred;
+      return stdPred;
+    }
+    const raw=d.candidates[0].content.parts[0].text;
+    const jMatch=raw.replace(/```json|```/g,'').match(/\[[\s\S]*\]/);
+    if(!jMatch){
+      console.log('AI予測JSON解析失敗 →標準予測を使用');
+      _growthPredCache[cacheKey]=stdPred;
+      return stdPred;
+    }
+    const aiPoints=JSON.parse(jMatch[0]);
+    const result=[...stdPred];
+    aiPoints.forEach(ap=>{
+      if(ap.value&&!isNaN(ap.value)){
+        const idx=result.findIndex(p=>p.age===ap.age);
+        if(idx>=0) result[idx].value=parseFloat(ap.value);
+      }
+    });
+    console.log('AI予測成功:', field, result.slice(0,3));
+    _growthPredCache[cacheKey]=result;
+    return result;
+  }catch(e){
+    console.log('AI予測エラー:',e.name,'→標準予測を使用');
+    _growthPredCache[cacheKey]=stdPred; // エラー時も標準予測をキャッシュ
+    return stdPred;
+  }
+}
+
+// 旧関数のエイリアス（後方互換）
+function predictGrowth(records, data, maxAge){
+  return predictGrowthStandard(records, data, 'height', maxAge);
+}
+
+function renderGrowthChart(canvasId, data, records, field, color, unit, maxAge){
+  const ctx=document.getElementById(canvasId);
+  if(!ctx) return;
+  if(growthCharts[canvasId]) growthCharts[canvasId].destroy();
+  const months=data.months;
+  // 実測値
+  const actual=records.filter(r=>r[field]!==null).map(r=>({x:r.age,y:r[field]}));
+  // 将来予測（身長・体重両方）
+  let predData=[];
+  if(actual.length>0){
+    predData=predictGrowthStandard(records,data,field,maxAge);
+  }
+  const predPoints=predData.map(p=>({x:p.age,y:parseFloat(p.value.toFixed(2))}));
+  const predStart=actual.length>0?actual[actual.length-1]:null;
+  const predLine=predStart?[{x:predStart.x,y:predStart[field]},...predPoints]:predPoints;
+  // チャートを先に作成してから非同期でAI予測を適用
+  // canvasId例: 'aoya-height-chart', 'eita-weight-chart'
+  const childFromId=canvasId.startsWith('aoya')?'aoya':'eita';
+  const fieldFromId=canvasId.includes('height')?'height':'weight';
+
+  growthCharts[canvasId]=new Chart(ctx,{
+    type:'line',
+    data:{
+      datasets:[
+        // 97%ile上限
+        {label:'97%ile',data:months.map((m,i)=>({x:m,y:data.p97[i]})),
+         borderColor:'rgba(200,200,200,0.5)',borderWidth:1,pointRadius:0,fill:false,tension:0.4},
+        // 3%ile〜97%ile 塗りつぶし
+        {label:'正常範囲(3〜97%ile)',data:months.map((m,i)=>({x:m,y:data.p3[i]})),
+         borderColor:'rgba(200,200,200,0.5)',borderWidth:1,pointRadius:0,
+         fill:'-1',backgroundColor:color.replace('1)','.1)'),tension:0.4},
+        // 50%ile中央値
+        {label:'50%ile(中央値)',data:months.map((m,i)=>({x:m,y:data.p50[i]})),
+         borderColor:color,borderWidth:2,pointRadius:0,fill:false,tension:0.4,borderDash:[6,3]},
+        // 実測値
+        {label:'実測値',data:actual,
+         borderColor:'#E63946',backgroundColor:'#E63946',borderWidth:2,
+         pointRadius:5,pointHoverRadius:7,fill:false,tension:0.3,showLine:true},
+        // 予測線
+        {label:'将来予測',data:predLine,
+         borderColor:'#E63946',borderWidth:1.5,pointRadius:0,fill:false,
+         tension:0.3,borderDash:[4,4]},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        x:{type:'linear',min:0,max:maxAge,title:{display:true,text:'月齢（か月）',font:{size:10}},
+           ticks:{stepSize:maxAge<=12?1:maxAge<=24?2:maxAge<=36?3:6,font:{size:9},callback:(v)=>v%6===0||maxAge<=24?v:''}},
+        y:{title:{display:true,text:unit,font:{size:10}},ticks:{font:{size:9}}},
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:(ctx)=>{
+            if(ctx.dataset.label==='実測値') return ctx.dataset.label+': '+ctx.parsed.y+unit;
+            if(ctx.dataset.label==='将来予測') return '予測: '+ctx.parsed.y.toFixed(1)+unit;
+            if(ctx.dataset.label==='将来予測（AI）') return 'AI予測: '+ctx.parsed.y.toFixed(1)+unit;
+            return ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+unit;
+          }
+        }}
+      }
+    }
+  });
+
+  // チャート作成後にAI予測を非同期で取得して上書き
+  if(actual.length>0){
+    delete _growthPredCache[childFromId+'-'+fieldFromId]; // 毎回新鮮なデータで予測
+    predictGrowthWithAI(childFromId,fieldFromId,records,data,maxAge).then(aiPred=>{
+      const chart=growthCharts[canvasId];
+      if(!chart||!chart.data||!chart.data.datasets[4]) return;
+      const aiLine=predStart
+        ?[{x:predStart.x,y:predStart[field]},...aiPred.map(p=>({x:p.age,y:parseFloat(p.value.toFixed(2))}))]
+        :aiPred.map(p=>({x:p.age,y:parseFloat(p.value.toFixed(2))}));
+      chart.data.datasets[4].data=aiLine;
+      chart.data.datasets[4].label='将来予測（AI）';
+      chart.update('none');
+    }).catch(e=>console.warn('AI予測エラー:',e));
+  }
+}
+
+function renderGrowthCharts(child){
+  // レンジセレクターから表示範囲を取得
+  const sel=document.getElementById(child+'-range-sel');
+  const maxAge=sel?parseInt(sel.value):72;
+  // 常に0〜72のデータを使い、描画範囲をmaxAgeで制限する
+  const hData=HEIGHT_MALE_0_72;
+  const wData=WEIGHT_MALE_0_72;
+  const isAoya=child==='aoya';
+  const color=isAoya?'rgba(24,95,165,1)':'rgba(29,158,117,1)';
+  const records=getGrowthRecords(child);
+
+  renderGrowthChart(child+'-height-chart',hData,records,'height',color,'cm',maxAge);
+  // 体重チャートは少し遅延させてGemini APIの連続呼び出しを避ける
+  setTimeout(()=>{
+    renderGrowthChart(child+'-weight-chart',wData,records,'weight',color,'kg',maxAge);
+  }, 2000);
+
+  // 記録一覧
+  const container=document.getElementById(child+'-growth-records');
+  if(records.length===0){
+    container.innerHTML='<p style="font-size:11px;color:#b4b2a9;text-align:center;padding:8px;">記録がありません</p>';
+    return;
+  }
+  const hDataRef=hData; const wDataRef=wData;
+  container.innerHTML='<p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:6px;">記録一覧</p>'+
+    records.map((r,i)=>{
+      const hPct=r.height?getPercentile(r.height,r.age,hDataRef):'';
+      const wPct=r.weight?getPercentile(r.weight,r.age,wDataRef):'';
+      const warn=hPct.includes('要確認')||wPct.includes('要確認');
+      return `<div class="growth-record-row" style="${warn?'background:#FCEBEB;':''}" data-idx="${i}">
+        <span><strong>${r.age}か月</strong>${r.height?' 身長'+r.height+'cm ('+hPct+')':''}${r.weight?' 体重'+r.weight+'kg ('+wPct+')':''}</span>
+        <span>
+          <button class="growth-edit-btn" onclick="editGrowthRecord('${child}',${i})">編集</button>
+          <button class="growth-del-btn" onclick="deleteGrowthRecord('${child}',${i})">×</button>
+        </span>
+      </div>`;
+    }).join('');
+}
+
+aRenderCal();aRenderTips();
+eRenderCal();eRenderTips();
+renderWevalBtns('aoya');
+renderWevalBtns('eita');
+initTranscribeSelects();
+initNutritionSelects();
+// 栄養タブ切り替え時に自動描画
+document.getElementById('stab-nutrition').addEventListener('click',()=>setTimeout(renderNutritionCharts,100));
+document.getElementById('stab-growth').addEventListener('click',()=>{setTimeout(()=>{renderGrowthCharts('aoya');renderGrowthCharts('eita');},100);});
+</script>
+
+<!-- 献立変更・追加モーダル -->
+<div id="add-menu-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="closeAddMenuModal(event)">
+  <div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+    <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#888780;margin-top:-4px;line-height:1;" onclick="document.getElementById('add-menu-modal').style.display='none'">×</button>
+    <p style="font-size:15px;font-weight:600;margin-bottom:4px;" id="modal-title">献立を変更・追加</p>
+    <p style="font-size:11px;color:#888780;margin-bottom:14px;">各食事に料理を1品ずつ追加できます。複数品ある場合は「+ 料理を追加」で行を増やしてください。</p>
+
+    <!-- 朝食 -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:#888780;margin-bottom:6px;display:block;">朝食</label>
+      <div id="modal-dishes-b"></div>
+      <button onclick="addModalDish('b')" style="font-size:11px;padding:4px 10px;border:1px dashed #d3d1c7;border-radius:12px;background:none;cursor:pointer;color:#888780;font-family:inherit;margin-top:4px;">+ 料理を追加</button>
+    </div>
+
+    <!-- 昼食 -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:#888780;margin-bottom:6px;display:block;">昼食</label>
+      <div id="modal-dishes-l"></div>
+      <button onclick="addModalDish('l')" style="font-size:11px;padding:4px 10px;border:1px dashed #d3d1c7;border-radius:12px;background:none;cursor:pointer;color:#888780;font-family:inherit;margin-top:4px;">+ 料理を追加</button>
+    </div>
+
+    <!-- 夕食（瑛太のみ） -->
+    <div style="margin-bottom:14px;" id="modal-d-row">
+      <label style="font-size:12px;font-weight:600;color:#888780;margin-bottom:6px;display:block;">夕食</label>
+      <div id="modal-dishes-d"></div>
+      <button onclick="addModalDish('d')" style="font-size:11px;padding:4px 10px;border:1px dashed #d3d1c7;border-radius:12px;background:none;cursor:pointer;color:#888780;font-family:inherit;margin-top:4px;">+ 料理を追加</button>
+    </div>
+
+    <button id="modal-save-btn" onclick="saveCustomMenu()" style="width:100%;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;background:#185FA5;color:#fff;">保存する</button>
+    <button onclick="deleteCustomMenu()" style="width:100%;padding:8px;border:none;background:none;color:#F09595;cursor:pointer;font-size:12px;margin-top:6px;font-family:inherit;">元の献立に戻す</button>
+  </div>
+</div>
+
+<!-- データリセットモーダル -->
+<div id="reset-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;">
+    <p style="font-size:16px;font-weight:600;margin-bottom:8px;color:#791F1F;">️ データを初期化しますか？</p>
+    <p style="font-size:12px;color:#5f5e5a;margin-bottom:6px;line-height:1.6;">以下のデータがすべて削除されます：</p>
+    <ul style="font-size:12px;color:#5f5e5a;margin-bottom:16px;padding-left:16px;line-height:1.8;">
+      <li>カレンダーの献立データ（変更・追加分）</li>
+      <li>完食度の記録</li>
+      <li>Firestoreのクラウドデータ</li>
+    </ul>
+    <p style="font-size:11px;color:#F09595;margin-bottom:16px;">※ この操作は取り消せません</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="executeReset()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#F09595;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">すべて削除する</button>
+      <button onclick="document.getElementById('reset-modal').style.display='none'" style="flex:1;padding:10px;border:1px solid #d3d1c7;border-radius:8px;background:#fff;color:#5f5e5a;font-size:13px;cursor:pointer;font-family:inherit;">キャンセル</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
