@@ -1057,7 +1057,7 @@ function aRenderCal(){
     const kcolor=hasMenuA ? getKanshokuColor(kkey,['b','l'],'b') : '';
     const customTag=cm?'<div style="font-size:8px;color:#3C3489;text-align:right;">編集済</div>':'';
     const photoKey='aoya-'+aY+'-'+aMo+'-'+d;
-    const photoUrl=_photoCache['aoya-'+photoKey]||localStorage.getItem('photo_aoya-'+photoKey)||'';
+    const photoUrl=localStorage.getItem('photo_aoya_'+aY+'_'+aMo+'_'+d)||'';
     if(_calView.aoya==='photo'){
       body.innerHTML+=`<div class="cal-day${it?' today-b':''}${aSel===d?' sel-b':''}${kcolor}" onclick="aSelDay(${d},${wi},${di})" style="padding:2px;">
         <div class="day-num" style="font-size:8px;">${d}</div>
@@ -1121,11 +1121,19 @@ function eRenderCal(){
     const hasMenuE = (m&&m.b&&m.b!==''&&m.b!=='（削除済み）');
     const kcolor=hasMenuE ? getKanshokuColor(kkey,['b','l','d'],'g') : '';
     const customTag=cm?'<div style="font-size:8px;color:#3C3489;text-align:right;">編集済</div>':'';
-    body.innerHTML+=`<div class="cal-day${it?' today-g':''}${eSel===d?' sel-g':''}${kcolor}" onclick="eSelDay(${d},${wi},${di})">
-      <div class="day-num">${d}</div>
-      ${m?`<div class="day-meal dm-g1">${m.b.split('・')[0]}</div><div class="day-meal dm-g2">${m.l.split('・')[0]}</div><div class="day-meal dm-g3">${(m.d||'').split('・')[0]}</div>`:''}
-      ${customTag}
-      <div class="day-wtag">W${wi+1}</div></div>`;
+    const ePhotoUrl=localStorage.getItem('photo_eita_'+eY+'_'+eMo+'_'+d)||'';
+    if(_calView.eita==='photo'){
+      body.innerHTML+=`<div class="cal-day${it?' today-g':''}${eSel===d?' sel-g':''}${kcolor}" onclick="eSelDay(${d},${wi},${di})" style="padding:2px;">
+        <div class="day-num" style="font-size:8px;">${d}</div>
+        ${ePhotoUrl?`<img src="${ePhotoUrl}" class="cal-day-photo" loading="lazy">`:'<div style="height:50px;background:#f1efe8;border-radius:4px;font-size:9px;color:#b4b2a9;display:flex;align-items:center;justify-content:center;">写真なし</div>'}
+      </div>`;
+    } else {
+      body.innerHTML+=`<div class="cal-day${it?' today-g':''}${eSel===d?' sel-g':''}${kcolor}" onclick="eSelDay(${d},${wi},${di})">
+        <div class="day-num">${d}</div>
+        ${m?`<div class="day-meal dm-g1">${m.b.split('・')[0]}</div><div class="day-meal dm-g2">${m.l.split('・')[0]}</div><div class="day-meal dm-g3">${(m.d||'').split('・')[0]}</div>`:''}
+        ${customTag}
+        <div class="day-wtag">W${wi+1}</div></div>`;
+    }
   }
 }
 function eitaChgMonth(dir){eMo+=dir;if(eMo>11){eMo=0;eY++;}if(eMo<0){eMo=11;eY--;}eSel=null;resetDet('eita');eRenderCal();wevalWeek.eita=1;renderWevalBtns('eita');}
@@ -2583,7 +2591,11 @@ function calcMonthlyNutrition(child, year, month){
     const wi = Math.floor((fd+d-1)/7), di = (fd+d-1)%7;
     const baseMenu = menus[wi%4][di];
     const cm = getCustomMenu('custom-'+child+'-'+year+'-'+month+'-'+d);
-    const m = cm || baseMenu;
+    const m = {
+      b: (cm&&cm.b) || baseMenu.b || '',
+      l: (cm&&cm.l) || baseMenu.l || '',
+      d: (cm&&cm.d) || baseMenu.d || ''
+    };
     const kkey = child+'-'+year+'-'+month+'-'+d;
     const kb = getKanshoku(kkey);
     const meals = child === 'aoya'
@@ -2799,10 +2811,10 @@ async function executeReset(){
 
 
 // ========== 料理写真カレンダー ==========
-let _calMode = {aoya:'text', eita:'text'};
+
 
 function setCalMode(child, mode){
-  _calMode[child] = mode;
+  _calView[child] = mode;
   ['text','photo'].forEach(m=>{
     const btn = document.getElementById(child+'-mode-'+m);
     if(btn) btn.className = 'cal-mode-btn' + (m===mode?' active':'');
