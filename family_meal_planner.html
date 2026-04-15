@@ -287,6 +287,28 @@
   .nutr-result-bar{height:4px;border-radius:2px;background:#e0ddd6;margin-top:4px;}
   .nutr-result-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
   .food-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#EEEDFE;color:#534AB7;margin:2px;}
+
+  /* 写真カレンダー */
+  .cal-view-toggle{display:flex;gap:6px;margin-bottom:8px;}
+  .cal-view-btn{padding:5px 12px;border:1px solid #d3d1c7;border-radius:16px;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#888780;}
+  .cal-view-btn.active{background:#2c2c2a;color:#fff;border-color:#2c2c2a;}
+  .cal-day-photo{width:100%;height:60px;object-fit:cover;border-radius:4px;display:block;}
+  .photo-upload-btn{width:100%;padding:6px;border:1px dashed #d3d1c7;border-radius:6px;background:none;font-size:11px;color:#888780;cursor:pointer;font-family:inherit;margin-top:6px;}
+  .photo-upload-btn:hover{border-color:#AFA9EC;color:#534AB7;}
+  .photo-del-btn{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .day-photo-wrap{position:relative;}
+  .photo-loading{font-size:10px;color:#888780;text-align:center;padding:4px;}
+
+  /* 写真カレンダー */
+  .cal-mode-btns{display:flex;gap:6px;margin-bottom:8px;}
+  .cal-mode-btn{padding:5px 12px;border:1px solid #d3d1c7;border-radius:16px;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#888780;}
+  .cal-mode-btn.active{background:#2c2c2a;color:#fff;border-color:#2c2c2a;}
+  .cal-day-photo{width:100%;height:100%;object-fit:cover;border-radius:4px;display:block;}
+  .cal-day.photo-mode{padding:2px;overflow:hidden;}
+  .photo-upload-trigger{position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .day-photo-wrap{position:relative;width:100%;padding-top:75%;overflow:hidden;}
+  .day-photo-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:3px;}
+  .photo-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;color:#888780;}
   @media(max-width:500px){
     .cal-day{min-height:52px;padding:3px;}.day-meal{display:none;}
       .ing-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));}
@@ -297,6 +319,8 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAjeaL--GzxWdr00K0yZsB-ij6Inlj0UVs",
@@ -309,15 +333,27 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const storage = getStorage(app);
 
   // グローバルに公開
   window._db = db;
+  window._storage = storage;
+  window._storageRef = ref;
+  window._uploadBytes = uploadBytes;
+  window._getDownloadURL = getDownloadURL;
+  window._deleteObject = deleteObject;
   window._fsDoc = doc;
   window._fsSetDoc = setDoc;
   window._fsGetDoc = getDoc;
   window._fsOnSnapshot = onSnapshot;
   window._fsCollection = collection;
   window._firebaseReady = true;
+  const storage = getStorage(app);
+  window._storage = storage;
+  window._storageRef = ref;
+  window._uploadBytes = uploadBytes;
+  window._getDownloadURL = getDownloadURL;
+  window._deleteObject = deleteObject;
 
   // FirestoreからデータをlocalStorageに同期するリスナー
   function startRealtimeSync(){
@@ -433,10 +469,20 @@
       <button class="inner-tab" onclick="switchInner('aoya','tip',this)">ポイント</button>
     </div>
     <div class="inner-section active" id="aoya-cal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="cal-mode-btns">
+          <button class="cal-mode-btn active" id="aoya-mode-text" onclick="setCalMode('aoya','text')">テキスト</button>
+          <button class="cal-mode-btn" id="aoya-mode-photo" onclick="setCalMode('aoya','photo')">写真</button>
+        </div>
+      </div>
       <div class="month-nav">
         <button class="nav-btn" onclick="aoyaChgMonth(-1)">前月</button>
         <h3 id="aoya-mlabel"></h3>
         <button class="nav-btn" onclick="aoyaChgMonth(1)">次月</button>
+      </div>
+      <div class="cal-view-toggle">
+        <button class="cal-view-btn active" id="aoya-view-text" onclick="setCalView('aoya','text',this)">テキスト</button>
+        <button class="cal-view-btn" id="aoya-view-photo" onclick="setCalView('aoya','photo',this)">写真</button>
       </div>
       <div class="k-legend">
         <span>完食度:</span>
@@ -493,10 +539,20 @@
       <button class="inner-tab" onclick="switchInner('eita','tip',this)">ポイント</button>
     </div>
     <div class="inner-section active" id="eita-cal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="cal-mode-btns">
+          <button class="cal-mode-btn active" id="eita-mode-text" onclick="setCalMode('eita','text')">テキスト</button>
+          <button class="cal-mode-btn" id="eita-mode-photo" onclick="setCalMode('eita','photo')">写真</button>
+        </div>
+      </div>
       <div class="month-nav">
         <button class="nav-btn" onclick="eitaChgMonth(-1)">前月</button>
         <h3 id="eita-mlabel"></h3>
         <button class="nav-btn" onclick="eitaChgMonth(1)">次月</button>
+      </div>
+      <div class="cal-view-toggle">
+        <button class="cal-view-btn active" id="eita-view-text" onclick="setCalView('eita','text',this)">テキスト</button>
+        <button class="cal-view-btn" id="eita-view-photo" onclick="setCalView('eita','photo',this)">写真</button>
       </div>
       <div class="k-legend">
         <span>完食度:</span>
@@ -1007,11 +1063,20 @@ function aRenderCal(){
     const hasMenuA = (m&&m.b&&m.b!==''&&m.b!=='（削除済み）');
     const kcolor=hasMenuA ? getKanshokuColor(kkey,['b','l'],'b') : '';
     const customTag=cm?'<div style="font-size:8px;color:#3C3489;text-align:right;">編集済</div>':'';
-    body.innerHTML+=`<div class="cal-day${it?' today-b':''}${aSel===d?' sel-b':''}${kcolor}" onclick="aSelDay(${d},${wi},${di})">
-      <div class="day-num">${d}</div>
-      ${(m&&m.b)?`<div class="day-meal dm-b1">${m.b}</div><div class="day-meal dm-b2">${m.l}</div>`:''}
-      ${customTag}
-      <div class="day-wtag">W${wi+1}</div></div>`;
+    const photoKey='aoya-'+aY+'-'+aMo+'-'+d;
+    const photoUrl=_photoCache['aoya-'+photoKey]||localStorage.getItem('photo_aoya-'+photoKey)||'';
+    if(_calView.aoya==='photo'){
+      body.innerHTML+=`<div class="cal-day${it?' today-b':''}${aSel===d?' sel-b':''}${kcolor}" onclick="aSelDay(${d},${wi},${di})" style="padding:2px;">
+        <div class="day-num" style="font-size:8px;">${d}</div>
+        ${photoUrl?`<img src="${photoUrl}" class="cal-day-photo" loading="lazy">`:'<div style="height:50px;background:#f1efe8;border-radius:4px;font-size:9px;color:#b4b2a9;display:flex;align-items:center;justify-content:center;">写真なし</div>'}
+      </div>`;
+    } else {
+      body.innerHTML+=`<div class="cal-day${it?' today-b':''}${aSel===d?' sel-b':''}${kcolor}" onclick="aSelDay(${d},${wi},${di})">
+        <div class="day-num">${d}</div>
+        ${(m&&m.b)?`<div class="day-meal dm-b1">${m.b}</div><div class="day-meal dm-b2">${m.l}</div>`:''}
+        ${customTag}
+        <div class="day-wtag">W${wi+1}</div></div>`;
+    }
   }
 }
 function aoyaChgMonth(dir){aMo+=dir;if(aMo>11){aMo=0;aY++;}if(aMo<0){aMo=11;aY--;}aSel=null;resetDet('aoya');aRenderCal();wevalWeek.aoya=1;renderWevalBtns('aoya');}
@@ -1038,7 +1103,9 @@ function aSelDay(d,wi,di){
       <div class="kanshoku-saved" id="ksaved-${dateKey}">保存しました</div>
     </div>
     <button class="add-menu-btn" onclick="openAddMenuModal('aoya',${d},${wi},${di})">+ この日の献立を変更・追加</button>
+    ${(()=>{const pk='aoya-'+dateKey; const pu=_photoCache['aoya-'+pk]||localStorage.getItem('photo_aoya-'+pk)||''; return pu?`<div class="day-photo-wrap" style="margin-top:8px;"><img src="${pu}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;"><button class="photo-del-btn" onclick="deleteDayPhoto('aoya','${dateKey}')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer;">削除</button></div>`:`<button id="photo-upload-day-btn" class="photo-upload-btn" onclick="triggerPhotoUpload('aoya',${d},${wi},${di})">+ この日の料理写真を追加</button>`; })()}
     <p style="font-size:10px;color:#b4b2a9;margin-top:6px;">献立名をタップするとレシピが表示されます</p>`;
+  window._aSelArgs=[d,wi,di];
 }
 function aRenderTips(){
   document.getElementById('aoya-tips-grid').innerHTML=aTips.map(t=>`<div class="tip-card"><div class="tip-lbl">[${t.lbl}]</div><div class="tip-title">${t.title}</div><div class="tip-body">${t.body}</div></div>`).join('');
@@ -1094,7 +1161,9 @@ function eSelDay(d,wi,di){
       <div class="kanshoku-saved" id="ksaved-${dateKey}">保存しました</div>
     </div>
     <button class="add-menu-btn" onclick="openAddMenuModal('eita',${d},${wi},${di})">+ この日の献立を変更・追加</button>
+    ${(()=>{const pk='eita-'+dateKey; const pu=_photoCache['eita-'+pk]||localStorage.getItem('photo_eita-'+pk)||''; return pu?`<div class="day-photo-wrap" style="margin-top:8px;"><img src="${pu}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;"><button onclick="deleteDayPhoto('eita','${dateKey}')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer;">削除</button></div>`:`<button id="photo-upload-day-btn" class="photo-upload-btn" onclick="triggerPhotoUpload('eita',${d},${wi},${di})">+ この日の料理写真を追加</button>`; })()}
     <p style="font-size:10px;color:#b4b2a9;margin-top:6px;">献立名をタップするとレシピが表示されます</p>`;
+  window._eSelArgs=[d,wi,di];
 }
 function eRenderTips(){
   document.getElementById('eita-tips-grid').innerHTML=eTips.map(t=>`<div class="tip-card"><div class="tip-lbl">[${t.lbl}]</div><div class="tip-title">${t.title}</div><div class="tip-body">${t.body}</div></div>`).join('');
@@ -2735,6 +2804,134 @@ async function executeReset(){
 
 
 
+
+// ========== 料理写真カレンダー ==========
+let _calMode = {aoya:'text', eita:'text'};
+
+function setCalMode(child, mode){
+  _calMode[child] = mode;
+  ['text','photo'].forEach(m=>{
+    const btn = document.getElementById(child+'-mode-'+m);
+    if(btn) btn.className = 'cal-mode-btn' + (m===mode?' active':'');
+  });
+  if(child==='aoya') aRenderCal();
+  else eRenderCal();
+}
+
+// 写真をFirebase Storageにアップロード
+async function uploadDayPhoto(child, year, month, day, file){
+  if(!window._storage) return null;
+  try{
+    // 圧縮処理（最大800px、品質0.7）
+    const compressed = await compressImage(file, 800, 0.7);
+    const path = `photos/${child}/${year}/${month}/${day}.jpg`;
+    const storageRef = window._storageRef(window._storage, path);
+    await window._uploadBytes(storageRef, compressed);
+    const url = await window._getDownloadURL(storageRef);
+    // Firestoreにもurl保存
+    fsSet('photos', child+'-'+year+'-'+month+'-'+day, url);
+    localStorage.setItem('photo_'+child+'_'+year+'_'+month+'_'+day, url);
+    return url;
+  }catch(e){
+    console.error('写真アップロードエラー:', e);
+    return null;
+  }
+}
+
+// 画像圧縮
+function compressImage(file, maxSize, quality){
+  return new Promise((resolve)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(w>maxSize||h>maxSize){
+          if(w>h){ h=Math.round(h*maxSize/w); w=maxSize; }
+          else{ w=Math.round(w*maxSize/h); h=maxSize; }
+        }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(resolve,'image/jpeg',quality);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 写真URL取得
+function getDayPhotoUrl(child, year, month, day){
+  return localStorage.getItem('photo_'+child+'_'+year+'_'+month+'_'+day)||null;
+}
+
+// 写真モードのカレンダーセル生成
+function buildPhotoCal(child, d, wi, di, isToday, isSelected, kcolor, year, month){
+  const photoUrl = getDayPhotoUrl(child, year, month, d);
+  const inputId = 'photo-input-'+child+'-'+d;
+  let inner = '';
+  if(photoUrl){
+    inner = `<div class="day-photo-wrap"><img src="${photoUrl}" alt="${d}日" onclick="openDayFromCal('${child}',${d},${wi},${di})"></div>`;
+  } else {
+    inner = `<div style="height:50px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#d3d1c7;font-size:20px;" onclick="triggerPhotoUpload('${child}',${d},${wi},${di},${year},${month})">+</div>`;
+  }
+  const cls = `cal-day photo-mode${isToday?' today-b':''}${isSelected?' sel-b':''}`;
+  return `<div class="${cls}" style="position:relative;min-height:60px;">
+    <div class="day-num" style="font-size:8px;">${d}</div>
+    ${inner}
+    <input type="file" id="${inputId}" accept="image/*" capture="environment" style="display:none;" onchange="onDayPhotoSelected(event,'${child}',${d},${wi},${di},${year},${month})">
+    ${photoUrl?`<button class="photo-upload-trigger" onclick="triggerPhotoUpload('${child}',${d},${wi},${di},${year},${month})">+</button>`:''}
+  </div>`;
+}
+
+function triggerPhotoUpload(child, d, wi, di, year, month){
+  const input = document.getElementById('photo-input-'+child+'-'+d);
+  if(input) input.click();
+}
+
+function openDayFromCal(child, d, wi, di){
+  if(child==='aoya') aSelDay(d,wi,di);
+  else eSelDay(d,wi,di);
+}
+
+async function onDayPhotoSelected(event, child, d, wi, di, year, month){
+  const file = event.target.files[0];
+  if(!file) return;
+  const btn = event.target;
+  btn.disabled = true;
+  const url = await uploadDayPhoto(child, year, month, d, file);
+  btn.disabled = false;
+  if(url){
+    if(child==='aoya') aRenderCal();
+    else eRenderCal();
+  }
+}
+
+// Firestoreから写真URLを同期
+function syncPhotoUrls(){
+  if(!window._db||!window._fsCollection||!window._fsOnSnapshot) return;
+  const photoCol = window._fsCollection(window._db, 'photos');
+  window._fsOnSnapshot(photoCol, (snapshot)=>{
+    snapshot.docChanges().forEach(change=>{
+      const key = change.doc.id; // child-year-month-day
+      const parts = key.split('-');
+      if(parts.length>=4){
+        const [child,year,month,day] = parts;
+        const lsKey = 'photo_'+child+'_'+year+'_'+month+'_'+day;
+        if(change.type==='removed'){
+          localStorage.removeItem(lsKey);
+        } else {
+          const url = change.doc.data().value;
+          if(url) localStorage.setItem(lsKey, url);
+        }
+      }
+    });
+    if(window.aRenderCal) window.aRenderCal();
+    if(window.eRenderCal) window.eRenderCal();
+  });
+}
+
 // ========== 料理写真栄養解析 ==========
 let photoChild = 'aoya';
 let photoBase64 = null;
@@ -2906,6 +3103,124 @@ function renderPhotoHistory(){
       </div>
       <span style="font-size:13px;font-weight:700;color:#E63946;">${h.energy}kcal</span>
     </div>`).join('');
+}
+
+
+// ========== 料理写真カレンダー機能 ==========
+const _calView = {aoya:'text', eita:'text'};
+const _photoCache = {}; // {child-year-month-day: url}
+
+function setCalView(child, view, btn){
+  _calView[child] = view;
+  document.querySelectorAll('#'+child+'-view-text, #'+child+'-view-photo').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(child==='aoya') aRenderCal();
+  else eRenderCal();
+}
+
+// 画像を圧縮してBase64を返す
+function compressImage(file, maxWidth=800, quality=0.7){
+  return new Promise((resolve)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h*maxWidth/w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(blob=>resolve(blob), 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadDayPhoto(child, dateKey, file){
+  if(!window._storage){ alert('Storage未初期化です'); return; }
+  try{
+    const compressed = await compressImage(file);
+    const path = 'photos/'+child+'/'+dateKey+'.jpg';
+    const storageRef = window._storageRef(window._storage, path);
+    await window._uploadBytes(storageRef, compressed);
+    const url = await window._getDownloadURL(storageRef);
+    _photoCache[child+'-'+dateKey] = url;
+    // Firestoreに写真URLを保存
+    fsSet('photos', child+'-'+dateKey, url);
+    return url;
+  }catch(e){
+    console.error('写真アップロードエラー:', e);
+    alert('写真のアップロードに失敗しました');
+  }
+}
+
+async function deleteDayPhoto(child, dateKey){
+  if(!confirm('この写真を削除しますか？')) return;
+  try{
+    if(window._storage){
+      const path = 'photos/'+child+'/'+dateKey+'.jpg';
+      const storageRef = window._storageRef(window._storage, path);
+      await window._deleteObject(storageRef).catch(()=>{});
+    }
+    delete _photoCache[child+'-'+dateKey];
+    fsSet('photos', child+'-'+dateKey, '');
+    if(child==='aoya'){ aRenderCal(); if(window._aSelArgs) aSelDay(...window._aSelArgs); }
+    else { eRenderCal(); if(window._eSelArgs) eSelDay(...window._eSelArgs); }
+  }catch(e){ console.error(e); }
+}
+
+async function getPhotoUrl(child, dateKey){
+  const cacheKey = child+'-'+dateKey;
+  if(_photoCache[cacheKey] !== undefined) return _photoCache[cacheKey];
+  // localStorageから
+  const local = localStorage.getItem('photo_'+cacheKey);
+  if(local){ _photoCache[cacheKey]=local; return local; }
+  return null;
+}
+
+// 写真アップロードinput生成
+function triggerPhotoUpload(child, d, wi, di){
+  const input = document.createElement('input');
+  input.type='file'; input.accept='image/*'; input.capture='environment';
+  input.onchange = async(e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const year=child==='aoya'?aY:eY;
+    const month=child==='aoya'?aMo:eMo;
+    const dateKey=child+'-'+year+'-'+month+'-'+d;
+    const btn = document.getElementById('photo-upload-day-btn');
+    if(btn){ btn.textContent='アップロード中...'; btn.disabled=true; }
+    const url = await uploadDayPhoto(child, dateKey, file);
+    if(url){
+      if(child==='aoya'){ aRenderCal(); aSelDay(d,wi,di); }
+      else { eRenderCal(); eSelDay(d,wi,di); }
+    }
+  };
+  input.click();
+}
+
+// Firestoreの写真URLをlocalStorageに同期するリスナー（Firebase moduleスクリプト内に追加）
+function initPhotoSync(){
+  if(!window._db || !window._fsOnSnapshot || !window._fsCollection) return;
+  try{
+    const photoCol = window._fsCollection(window._db, 'photos');
+    window._fsOnSnapshot(photoCol, (snapshot)=>{
+      snapshot.docChanges().forEach(change=>{
+        const key = change.doc.id;
+        const data = change.doc.data();
+        if(change.type==='removed' || !data.value){
+          localStorage.removeItem('photo_'+key);
+          delete _photoCache[key];
+        } else {
+          localStorage.setItem('photo_'+key, data.value);
+          _photoCache[key] = data.value;
+        }
+      });
+      if(window.aRenderCal) window.aRenderCal();
+      if(window.eRenderCal) window.eRenderCal();
+    });
+  }catch(e){ console.warn('写真同期エラー:', e); }
 }
 
 // ========== 成長曲線 ==========
@@ -3289,6 +3604,8 @@ eRenderCal();eRenderTips();
 renderWevalBtns('aoya');
 renderWevalBtns('eita');
 initTranscribeSelects();
+syncPhotoUrls();
+setTimeout(initPhotoSync, 2000);
 initNutritionSelects();
 // 栄養タブ切り替え時に自動描画
 document.getElementById('stab-nutrition').addEventListener('click',()=>setTimeout(renderNutritionCharts,100));
