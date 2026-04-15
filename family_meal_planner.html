@@ -293,9 +293,6 @@
   .food-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#EEEDFE;color:#534AB7;margin:2px;}
 
   /* 写真カレンダー */
-  .cal-view-toggle{display:flex;gap:6px;margin-bottom:8px;}
-  .cal-view-btn{padding:5px 12px;border:1px solid #d3d1c7;border-radius:16px;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#888780;}
-  .cal-view-btn.active{background:#2c2c2a;color:#fff;border-color:#2c2c2a;}
   .cal-day-photo{width:100%;height:60px;object-fit:cover;border-radius:4px;display:block;}
   .photo-upload-btn{width:100%;padding:6px;border:1px dashed #d3d1c7;border-radius:6px;background:none;font-size:11px;color:#888780;cursor:pointer;font-family:inherit;margin-top:6px;}
   .photo-upload-btn:hover{border-color:#AFA9EC;color:#534AB7;}
@@ -482,10 +479,7 @@
         <h3 id="aoya-mlabel"></h3>
         <button class="nav-btn" onclick="aoyaChgMonth(1)">次月</button>
       </div>
-      <div class="cal-view-toggle">
-        <button class="cal-view-btn active" id="aoya-view-text" onclick="setCalView('aoya','text',this)">テキスト</button>
-        <button class="cal-view-btn" id="aoya-view-photo" onclick="setCalView('aoya','photo',this)">写真</button>
-      </div>
+
       <div class="k-legend">
         <span>完食度:</span>
         <span><span class="k-dot" style="background:#185FA5;"></span>全完食(100%)</span>
@@ -552,10 +546,7 @@
         <h3 id="eita-mlabel"></h3>
         <button class="nav-btn" onclick="eitaChgMonth(1)">次月</button>
       </div>
-      <div class="cal-view-toggle">
-        <button class="cal-view-btn active" id="eita-view-text" onclick="setCalView('eita','text',this)">テキスト</button>
-        <button class="cal-view-btn" id="eita-view-photo" onclick="setCalView('eita','photo',this)">写真</button>
-      </div>
+
       <div class="k-legend">
         <span>完食度:</span>
         <span><span class="k-dot" style="background:#1D9E75;"></span>全完食(100%)</span>
