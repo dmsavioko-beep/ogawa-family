@@ -32,9 +32,31 @@
   .child-btn.eita.active{border-color:#1D9E75;background:#f0fbf6;}
   .child-btn.eita .child-btn-name{color:#1D9E75;}
   .child-btn.eita .child-btn-age{background:#E1F5EE;color:#1D9E75;}
-  .shared-tab-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:12px;}
-  .shared-tab{padding:6px 2px;font-size:10px;border:none;background:#e8e6e0;cursor:pointer;border-radius:6px;color:#888780;transition:all 0.15s;font-family:inherit;text-align:center;white-space:nowrap;line-height:1.3;}
-  .shared-tab.active{background:#fff;color:#2c2c2a;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .shared-tab-bar{display:none;} /* 旧タブ非表示 */
+  .shared-tab{display:none;}
+  /* 新ナビ構造 */
+  .nav-child-bar{display:flex;gap:6px;margin-bottom:8px;}
+  .nav-child-btn{flex:1;padding:10px 12px;font-size:12px;font-weight:600;border:2px solid #e0ddd6;background:#fff;cursor:pointer;border-radius:10px;font-family:inherit;color:#888780;transition:all 0.15s;}
+  .nav-child-btn.active-aoya{border-color:#185FA5;background:#EDF4FC;color:#185FA5;}
+  .nav-child-btn.active-eita{border-color:#1D9E75;background:#E1F5EE;color:#1D9E75;}
+  .nav-mode-bar{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:12px;}
+  .nav-mode-btn{padding:8px 4px;font-size:11px;font-weight:600;border:none;background:#e8e6e0;cursor:pointer;border-radius:8px;font-family:inherit;text-align:center;color:#888780;transition:all 0.15s;}
+  .nav-mode-btn.active{background:#2c2c2a;color:#fff;}
+  /* 子どもホームのサブタブ */
+  .child-subtab-bar{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .child-subtab-bar::-webkit-scrollbar{display:none;}
+  .child-subtab-btn{flex-shrink:0;padding:6px 12px;font-size:11px;font-weight:600;border:1.5px solid #e0ddd6;background:#fff;cursor:pointer;border-radius:16px;font-family:inherit;color:#888780;white-space:nowrap;}
+  .child-subtab-btn.active{background:#2c2c2a;color:#fff;border-color:#2c2c2a;}
+  /* 共通ツールのサブタブ */
+  .tool-subtab-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+  .tool-subtab-btn{padding:10px 4px;font-size:12px;font-weight:700;border:1.5px solid #d3d1c7;background:#fff;cursor:pointer;border-radius:10px;font-family:inherit;color:#888780;text-align:center;white-space:nowrap;line-height:1;transition:all 0.15s;min-height:44px;}
+  .tool-subtab-btn .tab-icon{font-size:15px;line-height:1;}
+  .tool-subtab-btn.active{background:#534AB7;color:#fff;border-color:#534AB7;box-shadow:0 2px 8px rgba(83,74,183,0.3);}
+  .tool-subtab-btn:active{transform:scale(0.96);}
+  .child-section{display:none;}
+  .child-section.active{display:block;}
+  .tool-section{display:none;}
+  .tool-section.active{display:block;}
   .shared-section{display:none;width:100%;max-width:100%;}
   .shared-section.active{display:block;width:100%;}
   .child-page{display:none;}
@@ -426,36 +448,44 @@
     <div><h1>小川家の献立プランナー</h1><p>碧也・瑛太の食事管理</p></div>
     <span class="offline-badge" id="sync-badge">⏳ 同期中...</span>
   </div>
-  <div class="child-switcher">
-    <button class="child-btn aoya active" onclick="switchChild('aoya',this)">
-      <div class="child-btn-inner">
-        <div class="child-btn-info">
-          <span class="child-btn-name">碧也</span>
-          <span class="child-btn-sub">2025年9月29日生まれ</span>
-          <span class="child-btn-age">月齢6か月 · 離乳食初期</span>
-        </div>
-        <img class="child-photo" src="data:image/jpeg;base64,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" alt="碧也">
-      </div>
-    </button>
-    <button class="child-btn eita" onclick="switchChild('eita',this)">
-      <div class="child-btn-inner">
-        <div class="child-btn-info">
-          <span class="child-btn-name">瑛太</span>
-          <span class="child-btn-sub">2023年5月20日生まれ</span>
-          <span class="child-btn-age">2歳10か月 · 幼児食</span>
-        </div>
-        <img class="child-photo" src="data:image/jpeg;base64,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" alt="瑛太">
-      </div>
-    </button>
+  <!-- 旧タブバー（非表示・互換性維持） -->
+  <div class="shared-tab-bar" style="display:none;">
+    <button class="shared-tab active" id="stab-aoya">碧也</button>
+    <button class="shared-tab" id="stab-eita">瑛太</button>
+    <button class="shared-tab" id="stab-ai">AI</button>
+    <button class="shared-tab" id="stab-photo">写真</button>
+    <button class="shared-tab" id="stab-nutrition">栄養</button>
+    <button class="shared-tab" id="stab-growth">成長</button>
   </div>
-  <div class="shared-tab-bar">
-    <button class="shared-tab active" id="stab-aoya" onclick="switchSharedTab('aoya-main','stab-aoya')">碧也の管理</button>
-    <button class="shared-tab" id="stab-eita" onclick="switchSharedTab('eita-main','stab-eita')">瑛太の管理</button>
-    <button class="shared-tab" id="stab-ai" onclick="switchSharedTab('ai-assistant','stab-ai')">AIアシスタント</button>
-    <button class="shared-tab" id="stab-photo" onclick="switchSharedTab('photo-nutr','stab-photo')">栄養解析</button>
-    <button class="shared-tab" id="stab-nutrition" onclick="switchSharedTab('nutrition-chart','stab-nutrition')">栄養バランス</button>
-    <button class="shared-tab" id="stab-growth" onclick="switchSharedTab('growth-chart','stab-growth')">成長曲線</button>
+
+
+  <!-- モード切替 -->
+  <div class="nav-mode-bar">
+    <button class="nav-mode-btn active" id="nav-mode-child" onclick="navSelectMode('child')">子どものホーム</button>
+    <button class="nav-mode-btn" id="nav-mode-tool" onclick="navSelectMode('tool')">AI分析・ツール</button>
   </div>
+
+  <!-- 子どものホーム -->
+  <div class="shared-section active" id="child-home">
+    <!-- 子ども選択ボタン（子どものホーム内） -->
+    <div class="nav-child-bar" id="child-home-selector">
+      <button class="nav-child-btn active-aoya" id="nav-aoya" onclick="navSelectChild('aoya')" style="display:flex;align-items:center;gap:8px;text-align:left;min-height:64px;">
+        <img id="nav-aoya-img" src="data:image/jpeg;base64,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" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #185FA5;" alt="碧也">
+        <div>
+          <span style="font-size:13px;font-weight:700;display:block;">碧也</span>
+          <span style="font-size:9px;font-weight:400;opacity:0.8;">月齢6か月 · 離乳食初期</span>
+          <span id="nav-aoya-comment" style="font-size:9px;color:#888780;display:block;margin-top:2px;line-height:1.4;"></span>
+        </div>
+      </button>
+      <button class="nav-child-btn" id="nav-eita" onclick="navSelectChild('eita')" style="display:flex;align-items:center;gap:8px;text-align:left;min-height:64px;">
+        <img id="nav-eita-img" src="data:image/jpeg;base64,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" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #e0ddd6;" alt="瑛太">
+        <div>
+          <span style="font-size:13px;font-weight:700;display:block;">瑛太</span>
+          <span style="font-size:9px;font-weight:400;opacity:0.8;">2歳10か月 · 幼児食</span>
+          <span id="nav-eita-comment" style="font-size:9px;color:#888780;display:block;margin-top:2px;line-height:1.4;"></span>
+        </div>
+      </button>
+    </div>
 
   <!-- 碧也ページ -->
   <div class="shared-section active" id="aoya-main">
@@ -463,6 +493,13 @@
       <div><h2>碧也の離乳食プランナー</h2><p>月齢6か月 · 離乳食初期（ゴックン期）· 1回食</p></div>
       <span class="badge-blue">碧也用</span>
     </div>
+    <!-- 子どもホームサブタブ（碧也） -->
+    <div class="child-subtab-bar" id="aoya-subtab-bar">
+      <button class="child-subtab-btn active" onclick="selectChildSubtab('aoya','cal',this)">献立・記録</button>
+      <button class="child-subtab-btn" onclick="selectChildSubtab('aoya','tip',this)">ポイント</button>
+    </div>
+    <!-- 碧也のサブセクション -->
+    <div class="child-section active" id="aoya-sub-cal">
     <div class="inner-tabs">
       <button class="inner-tab active" onclick="switchInner('aoya','cal',this)">献立</button>
       <button class="inner-tab" onclick="switchInner('aoya','tip',this)">ポイント</button>
@@ -522,6 +559,11 @@
         <div class="sch-row"><span class="sch-time" style="color:#888780;">2か月後</span><span>2回食へ（7〜8か月頃）</span></div>
       </div>
     </div>
+    </div><!-- /aoya-sub-cal -->
+    <!-- 碧也の成長曲線サブセクション -->
+
+    <!-- 碧也の栄養バランスサブセクション -->
+
   </div>
 
   <!-- 瑛太ページ -->
@@ -530,6 +572,12 @@
       <div><h2>瑛太の幼児食プランナー</h2><p>2歳10か月 · 幼児食 · 3食＋おやつ</p></div>
       <span class="badge-green">瑛太用</span>
     </div>
+    <!-- 子どもホームサブタブ（瑛太） -->
+    <div class="child-subtab-bar" id="eita-subtab-bar">
+      <button class="child-subtab-btn active" onclick="selectChildSubtab('eita','cal',this)">献立・記録</button>
+      <button class="child-subtab-btn" onclick="selectChildSubtab('eita','tip',this)">ポイント</button>
+    </div>
+    <div class="child-section active" id="eita-sub-cal">
     <div class="inner-tabs">
       <button class="inner-tab active" onclick="switchInner('eita','cal',this)">献立</button>
       <button class="inner-tab" onclick="switchInner('eita','tip',this)">ポイント</button>
@@ -590,71 +638,25 @@
         <div class="sch-row"><span class="sch-time" style="color:#1D9E75;">夕食</span><span>18〜19時 主食＋主菜＋副菜</span></div>
       </div>
     </div>
-  </div>
+    </div><!-- /eita-sub-cal -->
 
 
-  <!-- 料理写真栄養解析 -->
-  <div class="shared-section" id="photo-nutr">
-    <div class="page-header">
-      <div><h2>料理写真 栄養解析</h2><p>写真を撮るだけでAIが食材・栄養素を自動推定</p></div>
-      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#EEEDFE;color:#534AB7;font-weight:600;">Gemini Vision</span>
+  </div><!-- /eita-main -->
+  </div><!-- /child-home -->
+
+  <!-- 共通ツールラッパー -->
+  <div class="shared-section" id="tool-main">
+    <!-- 共通ツールサブタブ -->
+    <div class="tool-subtab-bar">
+      <button class="tool-subtab-btn active" id="tool-tab-ai" onclick="selectToolSubtab('ai',this)">AI提案</button>
+      <button class="tool-subtab-btn" id="tool-tab-photo" onclick="selectToolSubtab('photo',this)">写真解析</button>
+      <button class="tool-subtab-btn" id="tool-tab-nutr" onclick="selectToolSubtab('nutr',this)">栄養比較</button>
+      <button class="tool-subtab-btn" id="tool-tab-growth" onclick="selectToolSubtab('growth',this)">成長記録</button>
     </div>
-
-    <div class="ai-feature-card">
-      <p class="ai-feature-title">解析対象の子ども</p>
-      <div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button class="ai-sel-chip on" id="photo-child-aoya" onclick="togglePhotoChild('aoya')">碧也</button>
-        <button class="ai-sel-chip" id="photo-child-eita" onclick="togglePhotoChild('eita')">瑛太</button>
-      </div>
-
-      <p class="ai-feature-title">料理・食事の写真を選ぶ</p>
-      <p class="ai-feature-desc" style="margin-bottom:8px;">お皿全体が写るように撮影すると精度が上がります。家族の顔が写る場合はトリミングしてください。</p>
-
-      <!-- アップロードエリア -->
-      <div class="photo-upload-area" id="photo-upload-area" onclick="document.getElementById('photo-file-input').click()">
-        <div id="photo-upload-placeholder">
-          <div style="font-size:32px;margin-bottom:6px;"></div>
-          <p style="font-size:13px;font-weight:600;color:#5f5e5a;margin-bottom:2px;">写真を選ぶ・撮影する</p>
-          <p style="font-size:10px;color:#b4b2a9;">JPG・PNG・HEIC対応</p>
-        </div>
-        <img id="photo-preview" class="photo-preview" alt="プレビュー">
-      </div>
-      <input type="file" id="photo-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onPhotoSelected(event)">
-
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button onclick="document.getElementById('photo-file-input').click()" style="flex:1;padding:8px;border:1px solid #d3d1c7;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit;">ファイル選択</button>
-        <button onclick="clearPhoto()" style="padding:8px 12px;border:1px solid #F7C1C1;border-radius:8px;font-size:12px;background:#FCEBEB;color:#791F1F;cursor:pointer;font-family:inherit;">クリア</button>
-      </div>
-
-      <button class="ai-run-btn purple" id="photo-analyze-btn" onclick="analyzePhoto()" disabled style="margin-bottom:10px;">AIで栄養を解析する</button>
-
-      <!-- 結果表示 -->
-      <div id="photo-result-area" style="display:none;">
-        <div style="margin-bottom:8px;padding:10px;background:#f7f5ff;border-radius:8px;border:1px solid #AFA9EC;">
-          <p style="font-size:11px;font-weight:600;color:#534AB7;margin-bottom:4px;">認識された食材・料理</p>
-          <div id="photo-food-tags"></div>
-        </div>
-        <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:6px;">推定栄養素（1人前あたり）</p>
-        <div class="nutr-result-grid" id="photo-nutr-grid"></div>
-        <div style="margin-top:10px;padding:10px;background:#f7f6f2;border-radius:8px;">
-          <p style="font-size:11px;font-weight:600;color:#2c2c2a;margin-bottom:4px;">AIコメント</p>
-          <div id="photo-ai-comment" style="font-size:12px;color:#2c2c2a;line-height:1.7;"></div>
-        </div>
-        <p style="font-size:9px;color:#b4b2a9;margin-top:6px;">※推定値です。実際の栄養素は調理法・食材の量により異なります。</p>
-      </div>
-      <div class="ai-output" id="photo-ai-output"></div>
-    </div>
-
-    <!-- 解析履歴 -->
-    <div class="ai-feature-card">
-      <p class="ai-feature-title">解析履歴</p>
-      <p class="ai-feature-desc">直近の解析結果を記録します。</p>
-      <div id="photo-history" style="font-size:12px;color:#888780;">解析履歴はありません</div>
-    </div>
-  </div>
-
+    <!-- AI提案ツール -->
+    <div class="tool-section active" id="tool-ai">
   <!-- AIアシスタント -->
-  <div class="shared-section" id="ai-assistant">
+  <div id="ai-assistant">
     <div class="page-header">
       <div><h2>AIアシスタント</h2><p>Geminiが食事記録を分析・提案します</p></div>
       <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#EEEDFE;color:#534AB7;font-weight:600;">Gemini連携</span>
@@ -777,9 +779,60 @@
       <div class="ai-output" id="shopping-ai-output"></div>
     </div>
   </div>
-
-  <!-- 成長曲線 -->
-  <div class="shared-section" id="growth-chart">
+    </div><!-- /tool-ai -->
+    <!-- 写真解析ツール -->
+    <div class="tool-section" id="tool-photo">
+  <div id="photo-nutr">
+    <div class="page-header">
+      <div><h2>料理写真 栄養解析</h2><p>写真を撮るだけでAIが食材・栄養素を自動推定</p></div>
+      <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#EEEDFE;color:#534AB7;font-weight:600;">Gemini Vision</span>
+    </div>
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">解析対象の子ども</p>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button class="ai-sel-chip on" id="photo-child-aoya" onclick="togglePhotoChild('aoya')">碧也</button>
+        <button class="ai-sel-chip" id="photo-child-eita" onclick="togglePhotoChild('eita')">瑛太</button>
+      </div>
+      <p class="ai-feature-title">料理・食事の写真を選ぶ</p>
+      <p class="ai-feature-desc" style="margin-bottom:8px;">お皿全体が写るように撮影すると精度が上がります。家族の顔が写る場合はトリミングしてください。</p>
+      <div class="photo-upload-area" id="photo-upload-area" onclick="document.getElementById('photo-file-input').click()">
+        <div id="photo-upload-placeholder">
+          <p style="font-size:13px;font-weight:600;color:#5f5e5a;margin-bottom:2px;">写真を選ぶ・撮影する</p>
+          <p style="font-size:10px;color:#b4b2a9;">JPG・PNG・HEIC対応</p>
+        </div>
+        <img id="photo-preview" class="photo-preview" alt="プレビュー">
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" capture="environment" style="display:none;" onchange="onPhotoSelected(event)">
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button onclick="document.getElementById('photo-file-input').click()" style="flex:1;padding:8px;border:1px solid #d3d1c7;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit;">ファイル選択</button>
+        <button onclick="clearPhoto()" style="padding:8px 12px;border:1px solid #F7C1C1;border-radius:8px;font-size:12px;background:#FCEBEB;color:#791F1F;cursor:pointer;font-family:inherit;">クリア</button>
+      </div>
+      <button class="ai-run-btn purple" id="photo-analyze-btn" onclick="analyzePhoto()" disabled style="margin-bottom:10px;">AIで栄養を解析する</button>
+      <div id="photo-result-area" style="display:none;">
+        <div style="margin-bottom:8px;padding:10px;background:#f7f5ff;border-radius:8px;border:1px solid #AFA9EC;">
+          <p style="font-size:11px;font-weight:600;color:#534AB7;margin-bottom:4px;">認識された食材・料理</p>
+          <div id="photo-food-tags"></div>
+        </div>
+        <p style="font-size:11px;font-weight:600;color:#888780;margin-bottom:6px;">推定栄養素（1人前あたり）</p>
+        <div class="nutr-result-grid" id="photo-nutr-grid"></div>
+        <div style="margin-top:10px;padding:10px;background:#f7f6f2;border-radius:8px;">
+          <p style="font-size:11px;font-weight:600;color:#2c2c2a;margin-bottom:4px;">AIコメント</p>
+          <div id="photo-ai-comment" style="font-size:12px;color:#2c2c2a;line-height:1.7;"></div>
+        </div>
+        <p style="font-size:9px;color:#b4b2a9;margin-top:6px;">※推定値です。実際の栄養素は調理法・食材の量により異なります。</p>
+      </div>
+      <div class="ai-output" id="photo-ai-output"></div>
+    </div>
+    <div class="ai-feature-card">
+      <p class="ai-feature-title">解析履歴</p>
+      <p class="ai-feature-desc">直近の解析結果を記録します。</p>
+      <div id="photo-history" style="font-size:12px;color:#888780;">解析履歴はありません</div>
+    </div>
+  </div>
+    </div><!-- /tool-photo -->
+    <!-- 成長記録ツール -->
+    <div class="tool-section" id="tool-growth">
+  <div id="growth-chart">
     <div class="page-header">
       <div><h2>成長曲線チャート</h2><p>標準成長曲線との比較・将来予測</p></div>
       <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#E1F5EE;color:#085041;font-weight:600;">成長記録</span>
@@ -881,8 +934,10 @@
     </div>
     <p style="font-size:10px;color:#b4b2a9;padding:0 4px 12px;">参考：厚生労働省「乳幼児身体発育調査（2010年）」男児データに基づく成長曲線。個人差があるため、気になる場合はかかりつけ医にご相談ください。</p>
   </div>
-  <!-- 栄養バランスチャート -->
-  <div class="shared-section" id="nutrition-chart">
+    </div><!-- /tool-growth -->
+    <!-- 栄養比較ツール -->
+    <div class="tool-section" id="tool-nutr">
+  <div id="nutrition-chart">
     <div class="page-header">
       <div><h2>栄養バランスチャート</h2><p>完食度から算出した月次栄養素と標準摂取量の比較</p></div>
       <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#FAEEDA;color:#633806;font-weight:600;">月次分析</span>
@@ -953,6 +1008,8 @@
       </div>
     </div>
   </div>
+    </div><!-- /tool-nutr -->
+  </div><!-- /tool-main -->
 </div>
 
 <script>
@@ -997,18 +1054,8 @@ const eTips=[
 const sharedIng=[[],[],[],[]];
 
 function switchChild(child,btn){
-  // 子どもカードの切り替え
-  document.querySelectorAll('.child-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  // タブとコンテンツを明示的に切り替え
-  const targetSection = child==='aoya'?'aoya-main':'eita-main';
-  const targetTab = child==='aoya'?'stab-aoya':'stab-eita';
-  document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.shared-tab').forEach(t=>t.classList.remove('active'));
-  const sec = document.getElementById(targetSection);
-  const tab = document.getElementById(targetTab);
-  if(sec) sec.classList.add('active');
-  if(tab) tab.classList.add('active');
+  // navSelectChildに委譲
+  navSelectChild(child);
 }
 function switchSharedTab(id,tabId){
   document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
@@ -1130,7 +1177,7 @@ function eRenderCal(){
     } else {
       body.innerHTML+=`<div class="cal-day${it?' today-g':''}${eSel===d?' sel-g':''}${kcolor}" onclick="eSelDay(${d},${wi},${di})">
         <div class="day-num">${d}</div>
-        ${m?`<div class="day-meal dm-g1">${m.b.split('・')[0]}</div><div class="day-meal dm-g2">${m.l.split('・')[0]}</div><div class="day-meal dm-g3">${(m.d||'').split('・')[0]}</div>`:''}
+        ${(m&&m.b&&m.b!=='（削除済み）')?`<div class="day-meal dm-g1">${m.b.split('・')[0]}</div><div class="day-meal dm-g2">${m.l.split('・')[0]}</div><div class="day-meal dm-g3">${(m.d||'').split('・')[0]}</div>`:''}
         ${customTag}
         <div class="day-wtag">W${wi+1}</div></div>`;
     }
@@ -3608,13 +3655,235 @@ aRenderCal();aRenderTips();
 eRenderCal();eRenderTips();
 renderWevalBtns('aoya');
 renderWevalBtns('eita');
+
+// ========== 新ナビゲーション ==========
+let _navChild = 'aoya';
+let _navMode = 'child';
+
+function navSelectChild(child){
+  _navChild = child;
+  document.getElementById('nav-aoya').className = 'nav-child-btn' + (child==='aoya'?' active-aoya':'');
+  document.getElementById('nav-eita').className = 'nav-child-btn' + (child==='eita'?' active-eita':'');
+  const aoyaImg = document.getElementById('nav-aoya-img');
+  const eitaImg = document.getElementById('nav-eita-img');
+  if(aoyaImg) aoyaImg.style.borderColor = child==='aoya'?'#185FA5':'#e0ddd6';
+  if(eitaImg) eitaImg.style.borderColor = child==='eita'?'#1D9E75':'#e0ddd6';
+  showChildPage(child);
+  updateToolsForChild(child);
+}
+
+function navSelectMode(mode){
+  _navMode = mode;
+  document.getElementById('nav-mode-child').className = 'nav-mode-btn' + (mode==='child'?' active':'');
+  document.getElementById('nav-mode-tool').className = 'nav-mode-btn' + (mode==='tool'?' active':'');
+  if(mode === 'child') showChildPage(_navChild);
+  else showToolPage();
+}
+
+function showChildPage(child){
+  // child-homeを表示
+  document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
+  const home = document.getElementById('child-home');
+  if(home) home.classList.add('active');
+  // child-home内でaoya/eitaを切り替え
+  const aoyaMain = document.getElementById('aoya-main');
+  const eitaMain = document.getElementById('eita-main');
+  if(aoyaMain) aoyaMain.style.display = child==='aoya'?'block':'none';
+  if(eitaMain) eitaMain.style.display = child==='eita'?'block':'none';
+  if(child==='aoya'){ if(typeof aRenderCal==='function') aRenderCal(); }
+  else { if(typeof eRenderCal==='function') eRenderCal(); }
+}
+
+function showToolPage(){
+  document.querySelectorAll('.shared-section').forEach(s=>s.classList.remove('active'));
+  const target = document.getElementById('tool-main');
+  if(target) target.classList.add('active');
+  // child-home内を非表示にはしない（切り替えで戻れるよう状態保持）
+}
+
+function selectChildSubtab(child, tab, btn){
+  const bar = document.getElementById(child+'-subtab-bar');
+  if(bar) bar.querySelectorAll('.child-subtab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['cal','growth','nutr'].forEach(t=>{
+    const el = document.getElementById(child+'-sub-'+t);
+    if(el) el.classList.remove('active');
+  });
+  if(tab==='cal'||tab==='tip'){
+    const el = document.getElementById(child+'-sub-cal');
+    if(el) el.classList.add('active');
+    const sections = document.querySelectorAll('#'+child+'-main .inner-section');
+    sections.forEach(s=>s.classList.remove('active'));
+    const target = document.getElementById(child+(tab==='tip'?'-tip':'-cal'));
+    if(target) target.classList.add('active');
+    const tabs = document.querySelectorAll('#'+child+'-main .inner-tab');
+    tabs.forEach(b=>b.classList.remove('active'));
+    if(tab==='cal' && tabs[0]) tabs[0].classList.add('active');
+  } else if(tab==='growth'){
+    const el = document.getElementById(child+'-sub-growth');
+    if(el){ el.classList.add('active'); setTimeout(()=>renderGrowthCharts(child),100); }
+  } else if(tab==='nutr'){
+    const el = document.getElementById(child+'-sub-nutr');
+    if(el){ el.classList.add('active'); setTimeout(renderNutritionCharts,100); }
+  }
+}
+
+function selectToolSubtab(tab, btn){
+  document.querySelectorAll('.tool-subtab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['ai','photo','nutr','growth'].forEach(t=>{
+    const el = document.getElementById('tool-'+t);
+    if(el) el.classList.remove('active');
+  });
+  const target = document.getElementById('tool-'+tab);
+  if(target) target.classList.add('active');
+  if(tab==='nutr') setTimeout(renderNutritionCharts,100);
+  if(tab==='growth') setTimeout(()=>{renderGrowthCharts('aoya');renderGrowthCharts('eita');},100);
+}
+
+function updateToolsForChild(child){
+  if(typeof toggleDailyChild==='function') toggleDailyChild(child);
+}
+
+function embedChildSections(){
+  ['aoya','eita'].forEach(child=>{
+    const gEl = document.getElementById(child+'-growth-embed');
+    const nEl = document.getElementById(child+'-nutr-embed');
+    if(gEl) gEl.innerHTML='<p style="font-size:12px;color:#888780;padding:12px 0;">共通ツール→成長記録からデータを入力・確認できます。</p>';
+    if(nEl) nEl.innerHTML='<p style="font-size:12px;color:#888780;padding:12px 0;">共通ツール→栄養比較から詳細を確認できます。</p>';
+  });
+}
+
 initTranscribeSelects();
+embedChildSections();
+updateChildBtnComments();
+// ========== 子どもボタンのAIコメント生成 ==========
+// フォールバック用の一言リスト
+const _fallbackComments = {
+  aoya: [
+    'ゴックン、今日もがんばった',
+    'おかゆは安定の王者',
+    '口より手が忙しい日',
+    'スプーン奪いがち',
+    'じーっと見てる、食への関心◎',
+    'ゴックン期、着々と進行中',
+  ],
+  eita: [
+    '好き嫌い、はじまりました',
+    '急に食欲モンスター',
+    '食べるより遊ぶ期に突入',
+    'スプーン使いがうまくなった',
+    '昨日よりちょっと上手に食べた',
+    '今日は完食の日！',
+  ]
+};
+
+function _pickFallback(child){
+  const list = _fallbackComments[child];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function _gatherChildData(child){
+  const today = new Date();
+  const y = today.getFullYear(), mo = today.getMonth(), d = today.getDate();
+  const menus = child === 'aoya' ? aMenu : eMenu;
+  let meals = [], kanshokuSummary = [];
+
+  for(let i=0; i<=4; i++){
+    const dt = new Date(y, mo, d-i);
+    const dy=dt.getFullYear(), dm=dt.getMonth(), dd=dt.getDate();
+    const dateKey = child+'-'+dy+'-'+dm+'-'+dd;
+    const cm = getCustomMenu('custom-'+child+'-'+dy+'-'+dm+'-'+dd);
+    const fd = Math.floor((new Date(dy,dm,1).getDay()+dd-1)/7);
+    const di = (new Date(dy,dm,1).getDay()+dd-1)%7;
+    const baseM = menus[fd%4]?.[di];
+    const m = cm ? {b:cm.b||'',l:cm.l||'',d:cm.d||''} : (baseM||{b:'',l:'',d:''});
+    if(m.b && m.b !== '' && m.b !== '（削除済み）'){
+      const kb = getKanshoku(dateKey);
+      const label = i===0?'今日':i===1?'昨日':(i+'日前');
+      const dishes = [m.b,m.l,m.d].filter(Boolean).map(dish=>{
+        const r = getDishRate(kb, dish===m.b?'b':dish===m.l?'l':'d', dish.split('・')[0]);
+        return dish.split('・')[0] + (r?'('+r+')':'');
+      });
+      meals.push(label+'：'+dishes.join('・'));
+      const avg = getKanshokuAvg(kb, child==='aoya'?['b','l']:['b','l','d']);
+      if(avg !== null) kanshokuSummary.push(label+' 平均'+Math.round(avg)+'%');
+    }
+  }
+  return { meals, kanshokuSummary };
+}
+
+function getKanshokuAvg(kb, slots){
+  const rates = [];
+  slots.forEach(slot=>{
+    if(kb[slot] && typeof kb[slot]==='object'){
+      Object.values(kb[slot]).forEach(v=>{ const n=parseInt(v); if(!isNaN(n)) rates.push(n); });
+    } else if(kb[slot]){
+      const n=parseInt(kb[slot]); if(!isNaN(n)) rates.push(n);
+    }
+  });
+  return rates.length ? rates.reduce((a,b)=>a+b,0)/rates.length : null;
+}
+
+async function generateChildComment(child){
+  const el = document.getElementById('nav-'+child+'-comment');
+  if(!el) return;
+  el.textContent = '...';
+
+  try{
+    const { meals, kanshokuSummary } = _gatherChildData(child);
+    if(meals.length === 0){
+      el.textContent = _pickFallback(child);
+      return;
+    }
+    const childName = child==='aoya'?'碧也（月齢6か月・離乳食初期）':'瑛太（2歳10か月・幼児食）';
+    const prompt = `${childName}の直近の食事記録です。
+${meals.join('\n')}
+${kanshokuSummary.length?'完食度：'+kanshokuSummary.join('、'):''}
+
+この記録をもとに、母親視点の短いひとこと（15字以内）を1つだけ作ってください。
+以下のどちらかのスタイルで：
+A) ミニ日記風（事実＋ちょい感情）例：「にんじんに勝った」「おかゆ安定の王者」
+B) 成長ひとこと風（変化を一言）例：「好き嫌いはじまった」「急に食欲モンスター」
+
+絵文字は1つだけ使っても良い。説明や句読点・引用符は不要。ひとことだけ出力。`;
+
+    const res = await fetch(GEMINI_BASE+'gemini-2.0-flash-exp:generateContent?key='+GEMINI_KEY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:30, temperature:1.0}
+      })
+    });
+    if(!res.ok){ el.textContent=_pickFallback(child); return; }
+    const data = await res.json();
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if(raw && raw.length < 30){
+      el.textContent = raw.replace(/[「」"']/g,'');
+    } else {
+      el.textContent = _pickFallback(child);
+    }
+  }catch(e){
+    el.textContent = _pickFallback(child);
+  }
+}
+
+function updateChildBtnComments(){
+  // 少し遅延させてデータ読み込み後に生成
+  setTimeout(()=>{
+    generateChildComment('aoya');
+    setTimeout(()=>generateChildComment('eita'), 800);
+  }, 600);
+}
+
+showChildPage('aoya');
 syncPhotoUrls();
 setTimeout(initPhotoSync, 2000);
 initNutritionSelects();
 // 栄養タブ切り替え時に自動描画
-document.getElementById('stab-nutrition').addEventListener('click',()=>setTimeout(renderNutritionCharts,100));
-document.getElementById('stab-growth').addEventListener('click',()=>{setTimeout(()=>{renderGrowthCharts('aoya');renderGrowthCharts('eita');},100);});
+// stab-nutrition listener moved to tool subtab
+// stab-growth listener moved to tool subtab
 </script>
 
 <!-- 献立変更・追加モーダル -->
