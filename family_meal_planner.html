@@ -518,10 +518,10 @@
       <div class="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div></div>
       <div class="cal-grid" id="aoya-cal-body" style="margin-top:3px;"></div>
       <div class="detail-panel"><h4 id="aoya-det-date">日付をタップしてください</h4><div id="aoya-det-body"><p style="font-size:12px;color:#b4b2a9;">日付をタップすると献立が表示されます。</p></div></div>
-      <!-- 週次AI評価 -->
+      <!-- AIごはん記 -->
       <div class="weekly-eval-box" id="aoya-daily-advice-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <p class="weekly-eval-title" style="margin:0;">過去7日間のAIアドバイス</p>
+          <p class="weekly-eval-title" style="margin:0;">今週のAIごはん記</p>
           <span style="font-size:10px;color:#888780;" id="aoya-advice-date"></span>
         </div>
         <!-- 自動読み込みインジケーター -->
@@ -530,20 +530,6 @@
         </div>
         <!-- アドバイス表示エリア -->
         <div id="aoya-daily-advice" class="weval-result" style="display:none;"></div>
-        <!-- 献立改善提案（残存） -->
-        <div class="improve-proposal-box" id="aoya-improve-box">
-          <p class="improve-proposal-title">献立を改善提案に基づいて組み替えますか？</p>
-          <div class="improve-week-select-row">
-            <span class="improve-week-label">組み替え対象の週：</span>
-            <select class="transcribe-select" id="aoya-improve-week-sel"></select>
-          </div>
-          <button class="improve-apply-btn" id="aoya-improve-gen-btn" onclick="generateImprovedMenu('aoya')">改善献立を生成する</button>
-          <div class="improve-preview-box" id="aoya-improve-preview"></div>
-          <div class="improve-confirm-btns" id="aoya-improve-confirm" style="display:none;">
-            <button class="confirm-yes-btn" onclick="applyImprovedMenu('aoya')">この献立で組み替える</button>
-            <button class="confirm-no-btn" onclick="cancelImprovedMenu('aoya')">キャンセル</button>
-          </div>
-        </div>
       </div>
     </div>
     <div class="inner-section" id="aoya-tip">
@@ -598,29 +584,16 @@
       <div class="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div></div>
       <div class="cal-grid" id="eita-cal-body" style="margin-top:3px;"></div>
       <div class="detail-panel"><h4 id="eita-det-date">日付をタップしてください</h4><div id="eita-det-body"><p style="font-size:12px;color:#b4b2a9;">日付をタップすると献立が表示されます。</p></div></div>
-      <!-- 週次AI評価 -->
+      <!-- AIごはん記 -->
       <div class="weekly-eval-box" id="eita-daily-advice-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <p class="weekly-eval-title" style="margin:0;">過去7日間のAIアドバイス</p>
+          <p class="weekly-eval-title" style="margin:0;">今週のAIごはん記</p>
           <span style="font-size:10px;color:#888780;" id="eita-advice-date"></span>
         </div>
         <div id="eita-advice-loading" style="font-size:12px;color:#888780;padding:8px 0;display:none;">
           <div class="ai-loading" style="justify-content:flex-start;"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:6px;">Geminiが分析中...</span></div>
         </div>
         <div id="eita-daily-advice" class="weval-result" style="display:none;"></div>
-        <div class="improve-proposal-box" id="eita-improve-box">
-          <p class="improve-proposal-title">献立を改善提案に基づいて組み替えますか？</p>
-          <div class="improve-week-select-row">
-            <span class="improve-week-label">組み替え対象の週：</span>
-            <select class="transcribe-select" id="eita-improve-week-sel"></select>
-          </div>
-          <button class="improve-apply-btn blue" id="eita-improve-gen-btn" onclick="generateImprovedMenu('eita')">改善献立を生成する</button>
-          <div class="improve-preview-box" id="eita-improve-preview"></div>
-          <div class="improve-confirm-btns" id="eita-improve-confirm" style="display:none;">
-            <button class="confirm-yes-btn blue" onclick="applyImprovedMenu('eita')">この献立で組み替える</button>
-            <button class="confirm-no-btn" onclick="cancelImprovedMenu('eita')">キャンセル</button>
-          </div>
-        </div>
       </div>
     </div>
     <div class="inner-section" id="eita-tip">
@@ -1469,10 +1442,6 @@ ${recordStr}
         adviceEl.style.display='block';
         adviceEl.innerHTML = html + (finReason!=='STOP'?'<p style="font-size:10px;color:#b4b2a9;margin-top:4px;">（回答が途中で終了しました）</p>':'') + modelTag;
       }
-      // 献立改善ボックスを表示
-      const improveBox=document.getElementById(child+'-improve-box');
-      if(improveBox) improveBox.classList.add('show');
-      updateImproveWeekSel(child);
       _adviceCache[child]={text:raw, date:today.toLocaleDateString('ja-JP')};
       try{ localStorage.setItem('daily_advice_'+child, JSON.stringify(_adviceCache[child])); }catch(e){}
       if(dateEl) dateEl.textContent=today.toLocaleDateString('ja-JP')+'更新';
@@ -1520,196 +1489,6 @@ function _displayCachedAdvice(child){
     adviceEl.innerHTML=_adviceCache[child].text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
   }
   if(dateEl) dateEl.textContent=_adviceCache[child].date+'更新';
-  // 改善ボックスも表示
-  const improveBox=document.getElementById(child+'-improve-box');
-  if(improveBox) improveBox.classList.add('show');
-  if(typeof updateImproveWeekSel==='function') updateImproveWeekSel(child);
-}
-
-// ========== 次週献立組み替え機能 ==========
-// 改善提案に基づく献立データを一時保存
-window._pendingMenus = {};
-
-function updateImproveWeekSel(child){
-  const year=child==='aoya'?aY:eY;
-  const month=child==='aoya'?aMo:eMo;
-  const curWeek=wevalWeek[child];
-  const fd=new Date(year,month,1).getDay();
-  const dim=new Date(year,month+1,0).getDate();
-  const totalWeeks=Math.floor((fd+dim-1)/7)+1;
-  const sel=document.getElementById(child+'-improve-week-sel');
-  sel.innerHTML='';
-  // 次週以降を選択肢に
-  for(let w=curWeek+1;w<=totalWeeks;w++){
-    const opt=document.createElement('option');
-    opt.value=w;
-    opt.textContent='第'+w+'週';
-    sel.appendChild(opt);
-  }
-  // 来月の週も追加
-  let nextMonth=month+1, nextYear=year;
-  if(nextMonth>11){nextMonth=0;nextYear++;}
-  const fd2=new Date(nextYear,nextMonth,1).getDay();
-  const dim2=new Date(nextYear,nextMonth+1,0).getDate();
-  const totalWeeks2=Math.floor((fd2+dim2-1)/7)+1;
-  for(let w=1;w<=Math.min(totalWeeks2,4);w++){
-    const opt=document.createElement('option');
-    opt.value='next-'+w;
-    opt.textContent=(nextMonth+1)+'月 第'+w+'週';
-    sel.appendChild(opt);
-  }
-  if(sel.options.length===0){
-    const opt=document.createElement('option');
-    opt.value='next-1';
-    opt.textContent=(nextMonth+1)+'月 第1週';
-    sel.appendChild(opt);
-  }
-}
-
-function showImprovePreview(child, menus){
-  const preview = document.getElementById(child+'-improve-preview');
-  let html = '<strong>生成された7日分の改善献立：</strong><br><br>';
-  menus.forEach((m, i) => {
-    html += `<div style="padding:6px 0;border-bottom:1px solid #e0ddd6;"><strong>${i+1}日目</strong><br>`;
-    html += `朝：${m.b || '未定'}<br>昼：${m.l || '未定'}`;
-    if(m.d) html += `<br>夕：${m.d}`;
-    html += '</div>';
-  });
-  preview.className = 'improve-preview-box show';
-  preview.innerHTML = html;
-}
-
-async function generateImprovedMenu(child){
-  const evalText=window['_lastEvalText_'+child]||'';
-  if(!evalText){alert('先にAI評価を実行してください');return;}
-  const genBtn=document.getElementById(child+'-improve-gen-btn');
-  const preview=document.getElementById(child+'-improve-preview');
-  const confirm=document.getElementById(child+'-improve-confirm');
-  genBtn.disabled=true;
-  preview.className='improve-preview-box show';
-  preview.innerHTML='<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:8px;">7日分の改善献立を生成中...</span></div>';
-  confirm.style.display='none';
-  const ageCtx=child==='aoya'
-    ?'生後6か月の赤ちゃん（碧也）、離乳食初期。各食事はペースト状で塩分不使用。1日2食（朝・昼）'
-    :'2歳10か月の男の子（瑛太）、幼児食期。薄味。1日3食（朝・昼・夕）';
-  const mealFormat=child==='aoya'
-    ?'朝食と昼食の2食分'
-    :'朝食・昼食・夕食の3食分';
-  const prompt=`以下はAIによる先週の食事評価と改善提案です：
-
-${evalText}
-
-上記の改善提案を踏まえて、次の1週間（7日分）の具体的な献立を提案してください。
-
-対象：${ageCtx}
-形式：各日について${mealFormat}を以下のJSON形式で出力してください。
-
-必ず以下のJSON形式のみで回答してください。マークダウンのコードブロック（\`\`\`）は使わず、JSONの配列だけを出力してください。説明文も不要です：
-[
-  {"day":1,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":2,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":3,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":4,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":5,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":6,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}},
-  {"day":7,"b":"朝食メニュー","l":"昼食メニュー"${child==='eita'?',"d":"夕食メニュー"':''}}
-]`;
-  try{
-    const res=await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:prompt}]}],
-        generationConfig:{maxOutputTokens:8192,temperature:0.6}
-      })
-    });
-    if(!res.ok){
-      preview.textContent='エラーが発生しました。再試行してください。';
-      genBtn.disabled=false;return;
-    }
-    const data=await res.json();
-    if(data.candidates&&data.candidates[0]&&data.candidates[0].content){
-      const raw=data.candidates[0].content.parts[0].text;
-      // JSON抽出（```json ... ``` のマークダウン記法も対応）
-      let jsonStr = raw;
-      // マークダウンコードブロックを除去
-      jsonStr = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-      const jsonMatch = jsonStr.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-      if(!jsonMatch){
-        // 改行をまたぐパターンで再試行
-        const jsonMatch2 = raw.replace(/```json/gi,'').replace(/```/g,'').match(/\[[\s\S]*\]/);
-        if(!jsonMatch2){
-          preview.innerHTML='献立データの解析に失敗しました。再度お試しください。<br><small style="color:#888780;">'+raw.substring(0,300)+'</small>';
-          genBtn.disabled=false;return;
-        }
-        try{
-          const menus2=JSON.parse(jsonMatch2[0]);
-          window._pendingMenus[child]=menus2;
-          showImprovePreview(child, menus2);
-          confirm.style.display='flex';
-          genBtn.disabled=false;return;
-        }catch(e2){
-          preview.innerHTML='献立データの解析に失敗しました。再度お試しください。';
-          genBtn.disabled=false;return;
-        }
-      }
-      const menus=JSON.parse(jsonMatch[0]);
-      window._pendingMenus[child]=menus;
-      showImprovePreview(child, menus);
-      confirm.style.display='flex';
-    } else {
-      preview.textContent='回答を取得できませんでした。';
-    }
-  }catch(e){
-    preview.textContent='エラー: '+e.message;
-  }
-  genBtn.disabled=false;
-}
-
-function applyImprovedMenu(child){
-  const menus=window._pendingMenus[child];
-  if(!menus||menus.length===0){alert('献立データがありません');return;}
-  const sel=document.getElementById(child+'-improve-week-sel');
-  const selVal=sel.value;
-  let targetYear,targetMonth,targetWeek;
-  if(selVal.startsWith('next-')){
-    targetWeek=parseInt(selVal.replace('next-',''));
-    targetMonth=(child==='aoya'?aMo:eMo)+1;
-    targetYear=child==='aoya'?aY:eY;
-    if(targetMonth>11){targetMonth=0;targetYear++;}
-  } else {
-    targetWeek=parseInt(selVal);
-    targetYear=child==='aoya'?aY:eY;
-    targetMonth=child==='aoya'?aMo:eMo;
-  }
-  // 対象週の日付を特定してカスタム献立として保存
-  const fd=new Date(targetYear,targetMonth,1).getDay();
-  const dim=new Date(targetYear,targetMonth+1,0).getDate();
-  let dayCount=0;
-  for(let d=1;d<=dim;d++){
-    const wi=Math.floor((fd+d-1)/7);
-    if(wi+1!==targetWeek) continue;
-    if(dayCount>=menus.length) break;
-    const menuItem=menus[dayCount];
-    const key='custom-'+child+'-'+targetYear+'-'+targetMonth+'-'+d;
-    const data={b:menuItem.b||'',l:menuItem.l||''};
-    if(menuItem.d) data.d=menuItem.d;
-    try{const sv=JSON.stringify(data);localStorage.setItem(key,sv);fsSet('menus',key,sv);}catch(e){}
-    dayCount++;
-  }
-  // カレンダー再描画
-  if(child==='aoya') aRenderCal();
-  else eRenderCal();
-  // 確認UI更新
-  document.getElementById(child+'-improve-confirm').style.display='none';
-  document.getElementById(child+'-improve-preview').innerHTML+='<div style="margin-top:8px;padding:8px;background:#E1F5EE;border-radius:6px;color:#085041;font-weight:600;font-size:12px;">第'+targetWeek+'週のカレンダーに反映しました！カレンダーで確認してください。</div>';
-  delete window._pendingMenus[child];
-}
-
-function cancelImprovedMenu(child){
-  delete window._pendingMenus[child];
-  document.getElementById(child+'-improve-preview').className='improve-preview-box';
-  document.getElementById(child+'-improve-confirm').style.display='none';
 }
 
 // ========== カスタム献立管理 ==========
