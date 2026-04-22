@@ -160,10 +160,6 @@
   /* 週次AI評価 */
   .weekly-eval-box{margin-top:16px;padding:14px;border:1px solid #d3d1c7;border-radius:12px;background:#fff;overflow:visible;}
   .weekly-eval-title{font-size:13px;font-weight:600;margin-bottom:10px;}
-  .weval-run-btn-g{width:100%;padding:10px;border:none;border-radius:8px;background:#185FA5;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;}
-  .weval-run-btn-g:disabled{background:#b4b2a9;cursor:not-allowed;}
-  .weval-run-btn-b{width:100%;padding:10px;border:none;border-radius:8px;background:#1D9E75;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;}
-  .weval-run-btn-b:disabled{background:#b4b2a9;cursor:not-allowed;}
   .weval-result{padding:12px;background:#f7f6f2;border-radius:8px;font-size:12px;color:#2c2c2a;line-height:1.8;display:none;white-space:pre-wrap;border:1px solid #e0ddd6;word-break:break-word;overflow-wrap:break-word;height:auto;max-height:none;overflow:visible;}
   .weval-result.show{display:block;height:auto;max-height:none;overflow:visible;}
 
@@ -529,8 +525,6 @@
         </div>
         <!-- アドバイス表示エリア -->
         <div id="aoya-daily-advice" class="weval-result" style="display:none;"></div>
-        <!-- 手動更新ボタン -->
-        <button class="weval-run-btn-b" id="aoya-weval-btn" onclick="runDailyAdvice('aoya')" style="margin-top:8px;">AIアドバイスを更新する</button>
         <!-- 献立改善提案（残存） -->
         <div class="improve-proposal-box" id="aoya-improve-box">
           <p class="improve-proposal-title">献立を改善提案に基づいて組み替えますか？</p>
@@ -609,7 +603,6 @@
           <div class="ai-loading" style="justify-content:flex-start;"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="margin-left:6px;">Geminiが分析中...</span></div>
         </div>
         <div id="eita-daily-advice" class="weval-result" style="display:none;"></div>
-        <button class="weval-run-btn-g" id="eita-weval-btn" onclick="runDailyAdvice('eita')" style="margin-top:8px;">AIアドバイスを更新する</button>
         <div class="improve-proposal-box" id="eita-improve-box">
           <p class="improve-proposal-title">献立を改善提案に基づいて組み替えますか？</p>
           <div class="improve-week-select-row">
@@ -1393,10 +1386,8 @@ function _collect7DaysData(child){
 async function runDailyAdvice(child){
   const adviceEl = document.getElementById(child+'-daily-advice');
   const loadingEl = document.getElementById(child+'-advice-loading');
-  const btn = document.getElementById(child+'-weval-btn');
   const dateEl = document.getElementById(child+'-advice-date');
 
-  btn.disabled=true;
   if(adviceEl) adviceEl.style.display='none';
   if(loadingEl) loadingEl.style.display='block';
 
@@ -1409,7 +1400,6 @@ async function runDailyAdvice(child){
       adviceEl.style.display='block';
       adviceEl.innerHTML='まだ食事記録がありません。カレンダーに献立と完食度を記録するとAIアドバイスが表示されます。';
     }
-    btn.disabled=false;
     return;
   }
 
@@ -1464,25 +1454,56 @@ ${recordStr}
       if(improveBox) improveBox.classList.add('show');
       updateImproveWeekSel(child);
       _adviceCache[child]={text:raw, date:today.toLocaleDateString('ja-JP')};
+      try{ localStorage.setItem('daily_advice_'+child, JSON.stringify(_adviceCache[child])); }catch(e){}
       if(dateEl) dateEl.textContent=today.toLocaleDateString('ja-JP')+'更新';
     }
   }catch(e){
     if(loadingEl) loadingEl.style.display='none';
     if(adviceEl){ adviceEl.style.display='block'; adviceEl.textContent='エラー: '+e.message; }
   }
-  btn.disabled=false;
 }
 
-// カレンダータブを開いた時に自動でアドバイスを取得（キャッシュがなければ）
+// カレンダータブを開いた時に自動でアドバイスを表示（1日1回のみAPI呼び出し）
 function autoLoadDailyAdvice(child){
-  if(!_adviceCache[child]){
-    setTimeout(()=>runDailyAdvice(child), 1000);
-  } else {
-    const adviceEl=document.getElementById(child+'-daily-advice');
-    const dateEl=document.getElementById(child+'-advice-date');
-    if(adviceEl){ adviceEl.style.display='block'; adviceEl.innerHTML=_adviceCache[child].text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'); }
-    if(dateEl) dateEl.textContent=_adviceCache[child].date+'更新';
+  const todayStr = new Date().toLocaleDateString('ja-JP');
+
+  // メモリキャッシュに今日のがあればそれを表示
+  if(_adviceCache[child] && _adviceCache[child].date === todayStr){
+    _displayCachedAdvice(child);
+    return;
   }
+
+  // localStorageから復元（今日のものがあるか）
+  try{
+    const stored = localStorage.getItem('daily_advice_'+child);
+    if(stored){
+      const obj = JSON.parse(stored);
+      if(obj && obj.date === todayStr && obj.text){
+        _adviceCache[child] = obj;
+        _displayCachedAdvice(child);
+        return;
+      }
+    }
+  }catch(e){}
+
+  // 今日のキャッシュが無ければ新規取得
+  setTimeout(()=>runDailyAdvice(child), 800);
+}
+
+function _displayCachedAdvice(child){
+  const adviceEl=document.getElementById(child+'-daily-advice');
+  const dateEl=document.getElementById(child+'-advice-date');
+  const loadingEl=document.getElementById(child+'-advice-loading');
+  if(loadingEl) loadingEl.style.display='none';
+  if(adviceEl){
+    adviceEl.style.display='block';
+    adviceEl.innerHTML=_adviceCache[child].text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  }
+  if(dateEl) dateEl.textContent=_adviceCache[child].date+'更新';
+  // 改善ボックスも表示
+  const improveBox=document.getElementById(child+'-improve-box');
+  if(improveBox) improveBox.classList.add('show');
+  if(typeof updateImproveWeekSel==='function') updateImproveWeekSel(child);
 }
 
 // ========== 次週献立組み替え機能 ==========
