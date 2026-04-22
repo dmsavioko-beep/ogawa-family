@@ -1432,14 +1432,29 @@ ${recordStr}
 温かくポジティブなトーンで、親が実践しやすい内容にしてください。`;
 
   try{
-    const res=await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:prompt}]}],
-        generationConfig:{maxOutputTokens:8192,temperature:0.75}
-      })
-    });
+    // モデルを順に試す(503/429で次のモデルに)
+    let res = null;
+    let usedModel = GEMINI_MODELS[0];
+    for(let mi=0; mi<GEMINI_MODELS.length; mi++){
+      const model = GEMINI_MODELS[mi];
+      usedModel = model;
+      const url = GEMINI_BASE + model + ':generateContent';
+      res = await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{role:'user',parts:[{text:prompt}]}],
+          generationConfig:{maxOutputTokens:8192,temperature:0.75}
+        })
+      });
+      // 成功 or 致命的エラーなら抜ける。混雑系は次モデルへ
+      if(res.ok) break;
+      if(res.status!==503 && res.status!==429 && res.status!==500) break;
+      if(mi < GEMINI_MODELS.length-1){
+        if(loadingEl) loadingEl.textContent = model+'が混雑中。別のモデルで再試行中...';
+        await new Promise(r=>setTimeout(r, 1500));
+      }
+    }
     if(loadingEl) loadingEl.style.display='none';
     if(!res.ok){
       const err=await res.json().catch(()=>({}));
@@ -1449,9 +1464,10 @@ ${recordStr}
       const raw=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
       const finReason=data?.candidates?.[0]?.finishReason||'STOP';
       const html=raw.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      const modelTag = usedModel!==GEMINI_MODELS[0]?'<div style="font-size:10px;color:#888780;text-align:right;margin-top:4px;">使用モデル: '+usedModel+'</div>':'';
       if(adviceEl){
         adviceEl.style.display='block';
-        adviceEl.innerHTML = html + (finReason!=='STOP'?'<p style="font-size:10px;color:#b4b2a9;margin-top:4px;">（回答が途中で終了しました）</p>':'');
+        adviceEl.innerHTML = html + (finReason!=='STOP'?'<p style="font-size:10px;color:#b4b2a9;margin-top:4px;">（回答が途中で終了しました）</p>':'') + modelTag;
       }
       // 献立改善ボックスを表示
       const improveBox=document.getElementById(child+'-improve-box');
