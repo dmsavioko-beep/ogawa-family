@@ -159,11 +159,22 @@
   .kanshoku-saved{font-size:10px;color:#185FA5;margin-top:6px;display:none;}
   .kanshoku-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:3px;vertical-align:middle;}
   .kd-full{background:#185FA5;}.kd-most{background:#85B7EB;}.kd-half{background:#FAC775;}.kd-little{background:#F09595;}
-  /* 週次AI評価 */
+  /* 週次AI評価（AIごはん記） */
   .weekly-eval-box{margin-top:16px;padding:14px;border:1px solid #d3d1c7;border-radius:12px;background:#fff;overflow:visible;}
-  .weekly-eval-title{font-size:13px;font-weight:600;margin-bottom:10px;}
-  .weval-result{padding:12px;background:#f7f6f2;border-radius:8px;font-size:12px;color:#2c2c2a;line-height:1.8;display:none;white-space:pre-wrap;border:1px solid #e0ddd6;word-break:break-word;overflow-wrap:break-word;height:auto;max-height:none;overflow:visible;}
-  .weval-result.show{display:block;height:auto;max-height:none;overflow:visible;}
+  .weekly-eval-title{font-size:14px;font-weight:700;letter-spacing:0.02em;color:#3d3a34;display:inline-flex;align-items:center;gap:8px;}
+  .weekly-eval-title::before{content:'';display:inline-block;width:4px;height:15px;background:linear-gradient(180deg,#e89474 0%,#c27233 100%);border-radius:2px;}
+  .weval-result{padding:18px 18px 16px;background:linear-gradient(135deg,#fdf8f1 0%,#fbf0e3 100%);border-radius:14px;font-size:13px;color:#4a4540;line-height:1.95;display:none;border:1px solid #f1e2c9;word-break:break-word;overflow-wrap:break-word;letter-spacing:0.02em;}
+  .weval-result.show{display:block;}
+  .weval-result p{margin:0 0 10px;}
+  .weval-result p:last-child{margin-bottom:0;}
+  .weval-result h4{font-size:13px;font-weight:700;color:#b8763a;margin:16px 0 8px;padding-left:12px;position:relative;letter-spacing:0.03em;line-height:1.5;}
+  .weval-result h4:first-child{margin-top:0;}
+  .weval-result h4::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:#c27233;border-radius:2px;}
+  .weval-result hr{border:none;border-top:1px dashed #e0c89c;margin:14px 0;}
+  .weval-result strong{color:#b8622a;font-weight:700;background:linear-gradient(transparent 60%,#ffe0c0 60%,#ffe0c0 92%,transparent 92%);padding:0 2px;}
+  .weval-result ul{margin:8px 0 10px;padding:0;list-style:none;}
+  .weval-result ul li{position:relative;padding-left:18px;margin-bottom:4px;}
+  .weval-result ul li::before{content:'♡';position:absolute;left:2px;top:0;color:#e89474;font-size:11px;font-weight:bold;}
 
   /* 完食度カレンダー色分け */
   /* 碧也(aoya)=青テーマ → suffix b、瑛太(eita)=緑テーマ → suffix g */
@@ -1360,6 +1371,32 @@ function _collect7DaysData(child){
   return days;
 }
 
+// AIごはん記の簡易Markdown整形（### 見出し / --- 区切り / - 箇条書き / **太字** / 段落）
+function _formatAdviceMarkdown(raw){
+  if(!raw) return '';
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const lines = raw.split('\n');
+  const blocks = [];
+  let para = [];
+  let list = [];
+  const flushPara = ()=>{ if(para.length){ blocks.push('<p>'+para.join('<br>')+'</p>'); para=[]; } };
+  const flushList = ()=>{ if(list.length){ blocks.push('<ul>'+list.map(l=>'<li>'+l+'</li>').join('')+'</ul>'); list=[]; } };
+  for(const line of lines){
+    const t = line.trim();
+    if(t === ''){ flushPara(); flushList(); continue; }
+    if(/^[-—]{3,}$/.test(t)){ flushPara(); flushList(); blocks.push('<hr>'); continue; }
+    const h = t.match(/^#{1,6}\s+(.+)$/);
+    if(h){ flushPara(); flushList(); blocks.push('<h4>'+esc(h[1])+'</h4>'); continue; }
+    const li = t.match(/^[-*・]\s+(.+)$/);
+    if(li){ flushPara(); list.push(esc(li[1])); continue; }
+    flushList();
+    para.push(esc(t));
+  }
+  flushPara(); flushList();
+  // インライン装飾（**太字**）
+  return blocks.join('').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+}
+
 async function runDailyAdvice(child){
   const adviceEl = document.getElementById(child+'-daily-advice');
   const loadingEl = document.getElementById(child+'-advice-loading');
@@ -1449,7 +1486,7 @@ ${recordStr}
       const data=await res.json();
       const raw=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
       const finReason=data?.candidates?.[0]?.finishReason||'STOP';
-      const html=raw.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      const html=_formatAdviceMarkdown(raw);
       const modelTag = usedModel!==GEMINI_MODELS[0]?'<div style="font-size:10px;color:#888780;text-align:right;margin-top:4px;">使用モデル: '+usedModel+'</div>':'';
       if(adviceEl){
         adviceEl.style.display='block';
@@ -1499,7 +1536,7 @@ function _displayCachedAdvice(child){
   if(loadingEl) loadingEl.style.display='none';
   if(adviceEl){
     adviceEl.style.display='block';
-    adviceEl.innerHTML=_adviceCache[child].text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    adviceEl.innerHTML=_formatAdviceMarkdown(_adviceCache[child].text);
   }
   if(dateEl) dateEl.textContent=_adviceCache[child].date+'更新';
 }
